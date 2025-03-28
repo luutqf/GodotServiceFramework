@@ -1,0 +1,71 @@
+[gd_scene load_steps=5 format=3 uid="uid://bpvwjqjdneqde"]
+
+[ext_resource type="Script" path="res://GodotServiceFramework/Console/Window/FWindow.cs" id="1_17tga"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r25bx"]
+bg_color = Color(0.278431, 0.309804, 0.462745, 0.482353)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1wr3k"]
+bg_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_m7iqo"]
+bg_color = Color(0.0807819, 0.00449388, 0.15832, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+
+[node name="FWindow" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_17tga")
+
+[node name="Background" type="Panel" parent="."]
+custom_minimum_size = Vector2(0, 300)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_r25bx")
+
+[node name="Panel" type="Panel" parent="Background"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 40.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_1wr3k")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Background/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CloseButton" type="Button" parent="Background/Panel/HBoxContainer"]
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_m7iqo")
+text = "X"
+
+[node name="Label2" type="Label" parent="Background/Panel/HBoxContainer"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="Background/Panel/HBoxContainer"]
+custom_minimum_size = Vector2(400, 40)
+layout_mode = 2
+vertical_alignment = 1

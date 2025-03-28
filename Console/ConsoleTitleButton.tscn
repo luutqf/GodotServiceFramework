@@ -1,0 +1,19 @@
+[gd_scene load_steps=2 format=3 uid="uid://c0o21jp36w6e8"]
+
+[ext_resource type="Script" path="res://GodotServiceFramework/Console/ConsoleTitleButton.cs" id="1_8yhfp"]
+
+[node name="ConsoleTitleButton" type="HBoxContainer"]
+custom_minimum_size = Vector2(64, 32)
+offset_right = 138.0
+offset_bottom = 40.0
+script = ExtResource("1_8yhfp")
+
+[node name="ConsoleTitle" type="Button" parent="."]
+custom_minimum_size = Vector2(64, 32)
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Console标签01"
+
+[node name="CloseButton" type="Button" parent="."]
+layout_mode = 2
+text = "X"

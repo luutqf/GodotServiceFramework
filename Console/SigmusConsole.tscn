@@ -1,0 +1,52 @@
+[gd_scene load_steps=7 format=3 uid="uid://cs0lckfsc3vuh"]
+
+[ext_resource type="Script" path="res://GodotServiceFramework/Console/SigmusConsole.cs" id="1_okv76"]
+[ext_resource type="Script" uid="uid://bc3760f8p2nur" path="res://GodotServiceFramework/Console/Node/MyScrollContainer.cs" id="2_tl730"]
+[ext_resource type="Script" path="res://GodotServiceFramework/Console/MessageBox.cs" id="3_d3m00"]
+
+[sub_resource type="Theme" id="Theme_tl730"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_e3sek"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_tl730"]
+
+[node name="SigmusConsole" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = SubResource("Theme_tl730")
+script = ExtResource("1_okv76")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 10
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxEmpty_e3sek")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_tl730")
+follow_focus = true
+draw_focus_border = true
+horizontal_scroll_mode = 0
+script = ExtResource("2_tl730")
+
+[node name="MessageBox" type="VBoxContainer" parent="MarginContainer/ScrollContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+alignment = 2
+script = ExtResource("3_d3m00")

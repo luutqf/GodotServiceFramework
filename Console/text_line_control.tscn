@@ -1,0 +1,76 @@
+[gd_scene load_steps=7 format=3 uid="uid://dy1hr7psafir8"]
+
+[ext_resource type="Script" path="res://GodotServiceFramework/Console/TextLineControl.cs" id="1_sonlw"]
+[ext_resource type="Texture2D" uid="uid://cguuhblbc6uuf" path="res://Image/头像02.jpeg" id="2_dwqmv"]
+[ext_resource type="Script" uid="uid://dn653xkyl7cba" path="res://GodotServiceFramework/Console/Node/MyRichTextLabel.cs" id="3_wnt22"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_wnt22"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_tf6n5"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_0rtgj"]
+
+[node name="TextLineControl" type="VBoxContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 2
+script = ExtResource("1_sonlw")
+
+[node name="ConsoleTextLine" type="HBoxContainer" parent="."]
+custom_minimum_size = Vector2(0, 16)
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="Avatar" type="TextureRect" parent="ConsoleTextLine"]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+texture = ExtResource("2_dwqmv")
+expand_mode = 1
+
+[node name="MarginContainer" type="MarginContainer" parent="ConsoleTextLine"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 5
+
+[node name="TextLine" type="RichTextLabel" parent="ConsoleTextLine/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 2
+theme_override_colors/table_border = Color(0, 0, 0, 0)
+theme_override_colors/selection_color = Color(0.0117647, 0.662745, 0.956863, 1)
+theme_override_styles/fill = SubResource("StyleBoxEmpty_wnt22")
+theme_override_styles/background = SubResource("StyleBoxEmpty_tf6n5")
+theme_override_styles/normal = SubResource("StyleBoxEmpty_0rtgj")
+bbcode_enabled = true
+fit_content = true
+selection_enabled = true
+script = ExtResource("3_wnt22")
+
+[node name="ButtonScrollContainer" type="ScrollContainer" parent="."]
+visible = false
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 3
+vertical_scroll_mode = 0
+
+[node name="ButtonBox" type="HBoxContainer" parent="ButtonScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 50
+alignment = 1
+
+[node name="Button" type="Button" parent="ButtonScrollContainer/ButtonBox"]
+custom_minimum_size = Vector2(50, 32)
+layout_mode = 2
+text = "button"
+
+[node name="Button2" type="Button" parent="ButtonScrollContainer/ButtonBox"]
+custom_minimum_size = Vector2(50, 32)
+layout_mode = 2
+text = "button"
