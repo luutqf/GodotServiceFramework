@@ -3,6 +3,9 @@ using AspectInjector.Broker;
 
 namespace GodotServiceFramework.Binding;
 
+/// <summary>
+/// 用于把查询到的数据实体缓存,方便共享到其他地方
+/// </summary>
 [AttributeUsage(AttributeTargets.Method)]
 [Aspect(Scope.Global)]
 [Injection(typeof(BindingCacheAttribute))]

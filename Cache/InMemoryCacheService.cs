@@ -11,6 +11,7 @@ using System.Collections.Concurrent;
 /// 
 /// </summary>
 /// <param name="cache"></param>
+[Obsolete("没在用的")]
 public class InMemoryCacheService(IMemoryCache? cache = null)
 {
     private readonly IMemoryCache _cache = cache ?? new MemoryCache(new MemoryCacheOptions());

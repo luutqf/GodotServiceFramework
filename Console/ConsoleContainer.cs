@@ -79,6 +79,10 @@ public partial class ConsoleContainer : Control
         }
     }
 
+    /// <summary>
+    /// 打开一个会话,如果已经是当前会话, 则返回. 
+    /// </summary>
+    /// <param name="sigmusConsole"></param>
     public void OpenSigmusConsole(SigmusConsole sigmusConsole)
     {
         var currentTabControl = ConsoleTabContainer!.GetCurrentTabControl();
@@ -95,6 +99,9 @@ public partial class ConsoleContainer : Control
         _commandLineEdit!.Text = string.Empty;
     }
 
+    /// <summary>
+    /// 当控制台会话按钮按下时,打开它
+    /// </summary>
     private void _on_add_console_button_pressed()
     {
         var console = Services.Get<SceneStatsManager>()!.InstantiateScene<SigmusConsole>();
@@ -109,6 +116,11 @@ public partial class ConsoleContainer : Control
         _commandLineEdit!.Text = string.Empty;
     }
 
+    /// <summary>
+    /// 关闭一个会话,如果只剩下一个会话, 则无法关闭
+    /// </summary>
+    /// <param name="sigmusConsole"></param>
+    /// <returns></returns>
     public bool CloseSigmusConsole(SigmusConsole sigmusConsole)
     {
         if (ConsoleTabContainer!.GetChildCount() == 1) return false;

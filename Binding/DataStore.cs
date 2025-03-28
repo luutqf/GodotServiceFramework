@@ -7,7 +7,7 @@ using GodotServiceFramework.Util;
 namespace GodotServiceFramework.Binding;
 
 /// <summary>
-/// 这个是临时的数据仓库
+/// 这个是临时的数据仓库, 用于缓存所有IBinding类型的数据实体
 /// </summary>
 public static class DataStore
 {

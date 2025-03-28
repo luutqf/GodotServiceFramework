@@ -9,6 +9,9 @@ using GodotServiceFramework.Util;
 
 namespace GodotServiceFramework.Data;
 
+/// <summary>
+/// 用于标记需要数据绑定的节点, 当数据发生增删改等动作时, 会传导至节点
+/// </summary>
 public interface IDataNode
 {
     static readonly ConcurrentDictionary<ulong, (Type T, int I)> Dict = [];
