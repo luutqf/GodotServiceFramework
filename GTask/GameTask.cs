@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using GodotServiceFramework.Util;
+﻿using GodotServiceFramework.Util;
+using Newtonsoft.Json.Linq;
 
 namespace GodotServiceFramework.GTask;
 
@@ -11,22 +8,25 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
     private bool _initialized;
 
     private bool _completed;
+    protected string TaskId => $"{GameTaskWorkflow.Id}-{Index[0]}-{Index[1]}";
 
-    public string TaskId => $"{GameTaskWorkflow.Id}-{Index[0]}-{Index[1]}";
+    private readonly List<string> _skipKeys = [];
 
-    protected virtual string[] SkipKeys => [];
+    private readonly List<string> _skipNoKeys = [];
+
+    protected GameTaskContext Context => GameTaskWorkflow.Context;
 
     public void AppendResult(string line)
     {
         GameTaskWorkflow.AppendResult(Index, Title, $"{line}", 1);
     }
 
-    public void AppendWarn(string line)
+    protected void AppendWarn(string line)
     {
         GameTaskWorkflow.AppendResult(Index, Title, $"{line}", 1);
     }
 
-    public void AppendError(string line)
+    protected void AppendError(string line)
     {
         GameTaskWorkflow.AppendResult(Index, Title, $"{line}", 3);
     }
@@ -81,7 +81,7 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
                     Destroy0();
                     GameTaskWorkflow.StopWorkflow(true, true);
 
-                    GameTaskWorkflow.PutTag("error");
+                    GameTaskWorkflow.Context.PutTag(GameTaskWorkflow.Id, "error");
                     break;
                 case TaskAbort: //只进入一次, 不会触发任务完成的逻辑
                     //主動中止
@@ -130,8 +130,9 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
     public string Title { get; set; } = string.Empty;
 
     public virtual string StartMessage => $"{Title} started";
-    public virtual string SuccessMessage => $"✅ {Title} succeeded";
-    public virtual string FailMessage => $"❌{Title} failed";
+    public virtual string SuccessMessage => $"✅  {Title} succeeded";
+    public virtual string SkipMessage => $"✅  {Title} skipped";
+    public virtual string FailMessage => $"❌  {Title} failed";
 
     public virtual Dictionary<string, string> SkipMarker => [];
 
@@ -161,13 +162,17 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
         Destroy();
         //主动中止也算成功
         var success = Progress is >= TaskComplete or TaskGhostSkip or TaskSelfSkip or TaskTagSkip or TaskAbort;
-        if (success)
+        switch (Progress)
         {
-            AppendSingle(SuccessMessage);
-        }
-        else
-        {
-            AppendError(FailMessage);
+            case >= TaskComplete or TaskAbort:
+                AppendSingle(SuccessMessage);
+                break;
+            case TaskGhostSkip or TaskSelfSkip or TaskTagSkip:
+                AppendSingle(SkipMessage);
+                break;
+            default:
+                AppendError(FailMessage);
+                break;
         }
     }
 
@@ -179,12 +184,45 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
             if (Progress != TaskDefault) return;
 
 
-            //检查任务是否可以跳过
-            if (SkipKeys.Any(key => GameTaskWorkflow.HasTag(key)))
+            if (Args.TryGetValue("skipKeys", out var skipKeys))
             {
+                if (skipKeys is JArray array)
+                {
+                    foreach (var jToken in array)
+                    {
+                        _skipKeys.Add(jToken.ToString());
+                    }
+                }
+            }
+
+            if (Args.TryGetValue("skipNoKeys", out var skipNoKeys))
+            {
+                if (skipNoKeys is JArray array)
+                {
+                    foreach (var jToken in array)
+                    {
+                        _skipNoKeys.Add(jToken.ToString());
+                    }
+                }
+            }
+
+            //检查任务是否可以跳过, 如果包含这个tag, 则跳过
+            if (_skipKeys.Any(key => GameTaskWorkflow.Context.HasTag(key)))
+            {
+                AppendSingle($"{Name} 跳过 -> {skipKeys}");
                 Progress = TaskSelfSkip;
                 return;
             }
+
+
+            //如果不包含这个tag,则跳过
+            if (_skipNoKeys.Any(key => !GameTaskWorkflow.Context.HasTag(key)))
+            {
+                AppendSingle($"{Name} 跳过 -> {skipKeys}");
+                Progress = TaskSelfSkip;
+                return;
+            }
+
 
             Progress = TaskStart;
         }

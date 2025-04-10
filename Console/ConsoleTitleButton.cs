@@ -35,7 +35,6 @@ public partial class ConsoleTitleButton : HBoxContainer
                 if (this.GetRoot<ConsoleContainer>()!.CloseSigmusConsole(SigmusConsole))
                 {
                     GetParent().RemoveChild(this);
-                    QueueFree();
                 }
             }
         }));

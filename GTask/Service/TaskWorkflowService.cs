@@ -146,12 +146,13 @@ public partial class TaskWorkflowService : AutoGodotService
     /// <summary>
     /// 启动一个任务流
     /// </summary>
+    /// <param name="taskContext"></param>
     /// <param name="flowEntity"></param>
     /// <param name="commonArgs"></param>
     /// <param name="callFinally"></param>
     /// <param name="onStart"></param>
     /// <returns></returns>
-    public GameTaskWorkflow RunTaskWorkflow(GameTaskFlowEntity flowEntity,
+    public GameTaskWorkflow RunTaskWorkflow(GameTaskContext? taskContext, GameTaskFlowEntity flowEntity,
         Dictionary<string, object> commonArgs,
         Callable callFinally, Callable onStart = default)
     {
@@ -160,6 +161,7 @@ public partial class TaskWorkflowService : AutoGodotService
         workflow.OnComplete += (s, i) => callFinally.CallDeferred(true);
         workflow.OnError += (s, i) => callFinally.CallDeferred(false);
         workflow.OnBeforeStart += (s, i) => onStart.CallDeferred();
+        if (taskContext != null) workflow.Context = taskContext;
 
         return workflow;
     }

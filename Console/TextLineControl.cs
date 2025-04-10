@@ -75,6 +75,5 @@ public partial class TextLineControl : VBoxContainer
     public void Close()
     {
         GetParent().RemoveChild(this);
-        QueueFree();
     }
 }

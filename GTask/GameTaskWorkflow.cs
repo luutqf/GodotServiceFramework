@@ -89,7 +89,6 @@ public partial class GameTaskWorkflow : RefCounted, IEnumerable<GameTask[]>, IBi
     public event Action<string, int> OnBeforeStart = delegate { };
     public event Action<string, int> OnComplete = delegate { };
 
-    public event Action<string, int> OnTag = delegate { };
 
     //当进度更新时
     public event Action<int[], int> OnUpdateProgress = (_, _) => { };
@@ -193,7 +192,7 @@ public partial class GameTaskWorkflow : RefCounted, IEnumerable<GameTask[]>, IBi
         OnAfterStart = delegate { };
         OnError = delegate { };
         OnBeforeStart = delegate { };
-        OnTag = delegate { };
+        // Context.Clear();
     }
 
 
@@ -216,7 +215,7 @@ public partial class GameTaskWorkflow : RefCounted, IEnumerable<GameTask[]>, IBi
             {
                 if (!force)
                 {
-                    foreach (var gameTask in gameTasks.Where(gameTask => gameTask.Progress is -5 or -4))
+                    foreach (var gameTask in gameTasks.Where(gameTask => gameTask.Progress is -4))
                     {
                         AppendResult(gameTask.Index, gameTask.Title, $"有任务尚未结束: {gameTask.Title}", 4);
                         return false;
@@ -347,7 +346,6 @@ public partial class GameTaskWorkflow : RefCounted, IEnumerable<GameTask[]>, IBi
 
         IsStarted = true;
 
-
         //这里只执行任务流中的第一组任务,并行运行
         this.RunNextTasks(this[0], 0);
 
@@ -450,21 +448,11 @@ public partial class GameTaskWorkflow : RefCounted, IEnumerable<GameTask[]>, IBi
 
     #endregion
 
+    #region 上下文
 
-    #region Tags, 标签相关的操作, 涉及到事件传递
-
-    public readonly HashSet<string> FlowTags = [];
-
-    public bool HasTag(string tag)
-    {
-        return FlowTags.Contains(tag);
-    }
-
-    public void PutTag(string tag)
-    {
-        FlowTags.Add(tag);
-        OnTag.Invoke(tag, Id);
-    }
+    public GameTaskContext Context { get; set; } = new();
 
     #endregion
+
+    public void PutTag(string tag) => Context.PutTag(Id, tag);
 }

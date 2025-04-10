@@ -23,7 +23,6 @@ public partial class MessageBox : VBoxContainer
             {
                 var child = GetChild(i);
                 RemoveChild(child);
-                child.QueueFree();
             }
         }));
     }

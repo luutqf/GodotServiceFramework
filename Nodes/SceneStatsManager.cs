@@ -407,7 +407,6 @@ public partial class SceneStatsManager : AutoGodotService
         _activePages.Remove(page.Name.ToString().ToLower());
         _minimizePages.Remove(page.Name.ToString().ToLower());
         page.GetParent().RemoveChild(page);
-        page.QueueFree();
     }
 
     public void CloseAllPage()

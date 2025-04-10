@@ -129,7 +129,6 @@ public partial class ConsoleContainer : Control
             if (child == sigmusConsole)
             {
                 ConsoleTabContainer.RemoveChild(sigmusConsole);
-                sigmusConsole.QueueFree();
             }
         }
 

@@ -17,7 +17,6 @@ public partial class MyVBoxContainer : VBoxContainer
             {
                 var child = GetChild(i);
                 RemoveChild(child);
-                child.QueueFree();
             }
         }));
     }

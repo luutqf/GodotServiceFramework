@@ -23,7 +23,6 @@ public partial class FWindow : Control
             Callable.From(() =>
             {
                 GetParent().GetParent().RemoveChild(GetParent());
-                GetParent().QueueFree();
             }));
 
         _nameLabel!.SetText(Title);

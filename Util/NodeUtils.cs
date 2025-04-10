@@ -46,7 +46,6 @@ public static class NodeUtils
             }
 
             node.RemoveChild(child);
-            child.QueueFree();
         }
     }
 
@@ -61,7 +60,6 @@ public static class NodeUtils
 
             node.CallDeferred(Node.MethodName.RemoveChild, child);
 
-            child.QueueFree();
         }
     }
 

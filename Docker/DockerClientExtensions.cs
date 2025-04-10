@@ -280,7 +280,7 @@ public static class DockerClientExtensions
     public static async Task TailContainerFileAsync(this DockerClient @this,
         string containerId,
         string filePath,
-        Action<string, int> onNewLine,
+        Action<string, int, CancellationToken> onNewLine,
         CancellationToken cancellationToken = default,
         int line = 1)
     {
@@ -324,6 +324,72 @@ public static class DockerClientExtensions
                     break;
 
                 var text = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                onNewLine?.Invoke(text, lineCount, cancellationToken);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn($"监听容器文件中止: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 监听容器内某个文件的内容
+    /// </summary>
+    /// <param name="containerId"></param>
+    /// <param name="filePath"></param>
+    /// <param name="onNewLine"></param>
+    /// <param name="cancellationToken"></param>
+    /// <param name="this"></param>
+    /// <param name="line"></param>
+    /// <returns></returns>
+    public static async Task TailContainerFile(this DockerClient @this,
+        string containerId,
+        string filePath,
+        Action<string, int> onNewLine,
+        CancellationToken cancellationToken = default,
+        int line = 1)
+    {
+        try
+        {
+            // 创建执行命令的参数
+            var execCreateParameters = new ContainerExecCreateParameters
+            {
+                User = "root",
+                Cmd = ["/bin/sh", "-c", $"tail -{line}  {filePath} "],
+                AttachStdout = true,
+                AttachStderr = true,
+                Tty = false
+            };
+
+            // 创建exec实例
+            var execCreateResponse = await @this.Exec.ExecCreateContainerAsync(
+                containerId,
+                execCreateParameters,
+                cancellationToken);
+
+
+            using var stream = await @this.Exec.StartAndAttachContainerExecAsync(
+                execCreateResponse.ID,
+                false,
+                cancellationToken);
+
+            var lineCount = 0;
+            // 读取输出流
+            var buffer = new byte[4096];
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                lineCount++;
+                var result = await stream.ReadOutputAsync(
+                    buffer,
+                    0,
+                    buffer.Length,
+                    cancellationToken);
+
+                if (result.Count == 0)
+                    break;
+
+                var text = Encoding.UTF8.GetString(buffer, 0, result.Count);
                 onNewLine?.Invoke(text, lineCount);
             }
         }
@@ -332,6 +398,69 @@ public static class DockerClientExtensions
             Logger.Warn($"监听容器文件中止: {ex.Message}");
         }
     }
+
+    /// <summary>
+    /// 监听容器内某个文件的内容
+    /// </summary>
+    /// <param name="containerId"></param>
+    /// <param name="filePath"></param>
+    /// <param name="cancellationToken"></param>
+    /// <param name="this"></param>
+    /// <returns></returns>
+    public static async Task<string> CatContainerFile(this DockerClient @this,
+        string containerId,
+        string filePath,
+        CancellationToken cancellationToken = default)
+    {
+        var builder = new StringBuilder();
+        try
+        {
+            // 创建执行命令的参数
+            var execCreateParameters = new ContainerExecCreateParameters
+            {
+                User = "root",
+                Cmd = ["/bin/sh", "-c", $"cat {filePath} "],
+                AttachStdout = true,
+                AttachStderr = true,
+                Tty = false
+            };
+
+            // 创建exec实例
+            var execCreateResponse = await @this.Exec.ExecCreateContainerAsync(
+                containerId,
+                execCreateParameters,
+                cancellationToken);
+
+            using var stream = await @this.Exec.StartAndAttachContainerExecAsync(
+                execCreateResponse.ID,
+                false,
+                cancellationToken);
+
+            // 读取输出流
+            var buffer = new byte[4096];
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                var result = await stream.ReadOutputAsync(
+                    buffer,
+                    0,
+                    buffer.Length,
+                    cancellationToken);
+
+                if (result.Count == 0)
+                    break;
+
+                var text = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                builder.Append(text);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn($"监听容器文件中止: {ex.Message}");
+        }
+
+        return builder.ToString();
+    }
+
 
     /// <summary>
     /// 检查容器的一些信息，如是否正在运行， 它的标签等等
@@ -465,14 +594,11 @@ public static class DockerClientExtensions
 
         foreach (var imagesListResponse in images)
         {
-            foreach (var repoTag in imagesListResponse.RepoTags)
-            {
-                if (repoTag.Contains(url))
-                {
-                    Logger.Info($"Image: {url}");
-                    return true;
-                }
-            }
+            if (imagesListResponse.RepoTags == null) continue;
+            if (!imagesListResponse.RepoTags.Any(repoTag => repoTag.Contains(url))) continue;
+
+            Logger.Info($"Image: {url}");
+            return true;
         }
 
 
@@ -562,9 +688,9 @@ public static class DockerClientExtensions
             });
 
         var container = containers.FirstOrDefault(c =>
-            c.Names.Any(n => n.Equals(containerName, StringComparison.OrdinalIgnoreCase)));
+            c.Names.Any(n => n.Equals(containerName, StringComparison.OrdinalIgnoreCase)))!;
 
-        return (container?.ID, container?.State, container?.Image)!
+        return (container.ID, container.State, container.Image)
             ;
     }
 

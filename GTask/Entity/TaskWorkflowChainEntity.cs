@@ -68,7 +68,7 @@ public partial class TaskWorkflowChainEntity : RefCounted, IBinding
                 taskFlow.Name = taskFlow.Name + "+" + targetApp;
             }
 
-            taskFlow.OnTag += PutTag;
+            taskFlow.Context.OnTag += PutTag;
             taskFlow.OnComplete += (name, id) => PutTag($"completed", id);
             taskFlow.OnAfterStart += (name, id) => PutTag($"started", id);
             taskFlow.OnError += (name, id) => PutTag($"failed", id);
