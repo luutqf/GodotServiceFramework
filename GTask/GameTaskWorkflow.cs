@@ -2,8 +2,12 @@
 using Godot;
 using GodotServiceFramework.Binding;
 using GodotServiceFramework.Context.Service;
+using GodotServiceFramework.Context.Session;
+using GodotServiceFramework.Extensions;
+using GodotServiceFramework.GConsole;
 using GodotServiceFramework.GTask.Entity;
 using GodotServiceFramework.GTask.Extensions;
+using GodotServiceFramework.GTask.Service;
 using GodotServiceFramework.Util;
 
 namespace GodotServiceFramework.GTask;
@@ -17,7 +21,28 @@ public partial class GameTaskWorkflow : RefCounted, IEnumerable<GameTask[]>, IBi
     public GameTaskWorkflow()
     {
         Id = this.RandomFlowId();
+        ResetActions();
     }
+
+    private void ResetActions()
+    {
+        OnBeforeStart = (_, _) => State = GameTaskWorkflowState.PreStart;
+        OnAfterStart = (_, _) => State = GameTaskWorkflowState.AfterStart;
+        OnDestroy = (_, _) => State = GameTaskWorkflowState.Destroy;
+        OnComplete = (_, _) =>
+        {
+            State = GameTaskWorkflowState.Complete;
+            IsCompleted = true;
+        };
+        OnError = (_, _) =>
+        {
+            Context.AddError(Name);
+            State = GameTaskWorkflowState.Error;
+            IsCompleted = false;
+        };
+    }
+
+    public string WithSceneName { get; set; } = string.Empty; //todo 这里要参数化
 
     #region 一些基础字段
 
@@ -26,7 +51,15 @@ public partial class GameTaskWorkflow : RefCounted, IEnumerable<GameTask[]>, IBi
     /// <summary>
     /// SessionId主要用于将运行状态,定位到一个合适的会话
     /// </summary>
-    public ulong SessionId { get; set; }
+    public ulong SessionId
+    {
+        get => Context.SessionId;
+        set => Context.SessionId = value;
+    }
+
+    public GameTaskWorkflowState State { get; private set; } = GameTaskWorkflowState.Default;
+
+    public bool IsCompleted;
 
     /// <summary>
     /// 这是任务的名称, 一般情况下, name是唯一的
@@ -41,9 +74,6 @@ public partial class GameTaskWorkflow : RefCounted, IEnumerable<GameTask[]>, IBi
     /// </summary>
     private List<List<GameTaskEntity>> _tasksEntities = [];
 
-
-    public Dictionary<string, object> FlowData { get; set; } = [];
-
     /// <summary>
     /// 这个用来标记, 任务流是否是唯一的,条件是Name
     /// </summary>
@@ -52,21 +82,13 @@ public partial class GameTaskWorkflow : RefCounted, IEnumerable<GameTask[]>, IBi
     //这里代表着一个任务流的顺序列表, 每个元素可能是一个并行集合
     private GameTask[][] Tasks { get; set; } = [];
 
-
-    // //TODO 这个东西应该删掉, 放在主对象中也没什么问题的
-    // public GameTaskStatus Status { get; set; } = new();
-
-
     public int[][] TaskProgress { get; private set; } = [];
 
-    public bool IsStarted { get; private set; }
+    public bool IsStarted => State is GameTaskWorkflowState.AfterStart or GameTaskWorkflowState.Complete;
 
-    public bool IsDestroyed { get; private set; }
+    public bool IsDestroyed => State is GameTaskWorkflowState.Destroy;
 
-    public int CurrentIndex { get; private set; } = 0;
-
-
-    public TaskWorkflowChainEntity? Chain { get; set; } = null;
+    public int CurrentIndex { get; private set; }
 
     #endregion
 
@@ -83,11 +105,12 @@ public partial class GameTaskWorkflow : RefCounted, IEnumerable<GameTask[]>, IBi
     public CancellationTokenSource Cts = new();
 
     // 这是几个任务流的生命周期
-    public event Action<string, int> OnDestroy = delegate { };
-    public event Action<string, int> OnError = delegate { };
-    public event Action<string, int> OnAfterStart = delegate { };
-    public event Action<string, int> OnBeforeStart = delegate { };
-    public event Action<string, int> OnComplete = delegate { };
+    public event Action<string, int> OnDestroy = null!;
+
+    public event Action<string, int> OnError = null!;
+    public event Action<string, int> OnAfterStart = null!;
+    public event Action<string, int> OnBeforeStart = null!;
+    public event Action<string, int> OnComplete = null!;
 
 
     //当进度更新时
@@ -186,13 +209,7 @@ public partial class GameTaskWorkflow : RefCounted, IEnumerable<GameTask[]>, IBi
     {
         RunningTaskWorkFlow.Remove((Name, Id));
         OnDestroy(Name, Id);
-        OnUpdateProgress = delegate { };
-        OnResultLine = delegate { };
-        OnDestroy = delegate { };
-        OnAfterStart = delegate { };
-        OnError = delegate { };
-        OnBeforeStart = delegate { };
-        // Context.Clear();
+        ClearActions();
     }
 
 
@@ -277,8 +294,8 @@ public partial class GameTaskWorkflow : RefCounted, IEnumerable<GameTask[]>, IBi
 
         AppendResult([-1, -1], "flow", $"任务已终止 {taskWorkflow.Id} {taskWorkflow.Name}", 4);
         RunningTaskWorkFlow.Remove((Name, Id));
-        taskWorkflow.IsStarted = false;
-        taskWorkflow.IsDestroyed = true;
+        taskWorkflow.State = GameTaskWorkflowState.Destroy;
+        // taskWorkflow.IsDestroyed = true;
         taskWorkflow.Cts.Cancel();
 
         return true;
@@ -286,6 +303,8 @@ public partial class GameTaskWorkflow : RefCounted, IEnumerable<GameTask[]>, IBi
 
     private bool BeforeStart()
     {
+        State = GameTaskWorkflowState.AfterStart;
+
         if (Id == 0) Id = this.RandomFlowId();
 
         foreach (var (name, id) in RunningTaskWorkFlow.Keys)
@@ -297,7 +316,7 @@ public partial class GameTaskWorkflow : RefCounted, IEnumerable<GameTask[]>, IBi
             }
         }
 
-        RunningTaskWorkFlow[(Name, Id)] = this;
+        // RunningTaskWorkFlow[(Name, Id)] = this;
         OnBeforeStart.Invoke(Name, Id);
 
 
@@ -307,13 +326,13 @@ public partial class GameTaskWorkflow : RefCounted, IEnumerable<GameTask[]>, IBi
         }
 
 
-        var taskWorkflow = this;
+        // var taskWorkflow = this;
 
         //这里是先初始化进度条信息
-        var list = new int[taskWorkflow.Count][];
-        for (var i = 0; i < taskWorkflow.Count; i++)
+        var list = new int[this.Count][];
+        for (var i = 0; i < this.Count; i++)
         {
-            var tasks = taskWorkflow[i];
+            var tasks = this[i];
             list[i] = new int[tasks.Length];
 
             for (var j = 0; j < tasks.Length; j++)
@@ -322,10 +341,10 @@ public partial class GameTaskWorkflow : RefCounted, IEnumerable<GameTask[]>, IBi
             }
         }
 
-        taskWorkflow.IsStarted = true;
-        taskWorkflow.IsDestroyed = false;
-        taskWorkflow.TaskProgress = list;
-        taskWorkflow.CurrentIndex = 0;
+        // taskWorkflow.IsStarted = true;
+        // taskWorkflow.IsDestroyed = false;
+        TaskProgress = list;
+        CurrentIndex = 0;
 
         return true;
     }
@@ -338,18 +357,33 @@ public partial class GameTaskWorkflow : RefCounted, IEnumerable<GameTask[]>, IBi
     {
         if (IsStarted) return;
 
+        Context.Workflows.Add(this);
+
+        CommonArgs.AddRange(Context.CommonArgs);
+
+        if (Context.SessionId != 0) SessionId = Context.SessionId;
+
         if (!BeforeStart())
         {
             AppendResult([-1, -1], "flow", $"任务无法完成初始化", 4);
             return;
         }
 
-        IsStarted = true;
+        // IsStarted = true;
+        State = GameTaskWorkflowState.AfterStart;
+
 
         //这里只执行任务流中的第一组任务,并行运行
         this.RunNextTasks(this[0], 0);
 
         OnAfterStart(Name, Id);
+
+        if (!string.IsNullOrEmpty(WithSceneName))
+            this.EmitSessionSignal(new ConsoleMessage
+            {
+                Scene = WithSceneName,
+                Args = this
+            });
     }
 
 
@@ -455,4 +489,59 @@ public partial class GameTaskWorkflow : RefCounted, IEnumerable<GameTask[]>, IBi
     #endregion
 
     public void PutTag(string tag) => Context.PutTag(Id, tag);
+
+
+    public GameTaskWorkflow Clone()
+    {
+        return Services.Get<TaskWorkflowService>()!.FlowToFlow(this);
+    }
+
+    /// <summary>
+    /// TODO 重置整个任务流,所有状态恢复初始状态
+    /// </summary>
+    public void Reset()
+    {
+        ClearActions();
+
+        ResetActions();
+        State = GameTaskWorkflowState.Default;
+        foreach (var t in TaskProgress)
+        {
+            for (var j = 0; j < t.Length; j++)
+            {
+                t[j] = 0;
+            }
+        }
+
+        CurrentIndex = 0;
+        Cts = new CancellationTokenSource();
+        IsCompleted = false;
+        foreach (var gameTaskse in Tasks)
+        {
+            foreach (var gameTask in gameTaskse)
+            {
+                gameTask.Reset();
+            }
+        }
+    }
+
+    private void ClearActions()
+    {
+        OnUpdateProgress = delegate { };
+        OnResultLine = delegate { };
+        OnDestroy = delegate { };
+        OnAfterStart = delegate { };
+        OnError = delegate { };
+        OnBeforeStart = delegate { };
+    }
+}
+
+public enum GameTaskWorkflowState
+{
+    Default,
+    PreStart,
+    AfterStart,
+    Error,
+    Complete,
+    Destroy
 }

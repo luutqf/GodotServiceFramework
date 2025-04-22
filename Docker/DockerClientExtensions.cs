@@ -485,9 +485,6 @@ public static class DockerClientExtensions
                 Image = response.Image,
                 Created = response.Created,
                 Ip = response.NetworkSettings?.Networks?.FirstOrDefault().Value?.IPAddress,
-                // Ports = response.NetworkSettings?.Ports?.Where(p => p.Value != null)
-                //     .Select(p => $"{p.Key} -> {string.Join(", ", p.Value.Select(b => $"{b.HostIP}:{b.HostPort}"))}")
-                //     .ToList()
             }, response);
         }
         catch (Exception e)

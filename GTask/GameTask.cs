@@ -116,6 +116,16 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
 
     public readonly Dictionary<string, object> Args = args;
 
+    public object? GetArg(params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            if (Args.TryGetValue(key, out var arg)) return arg;
+        }
+
+        return null;
+    }
+
     public readonly int[] Index = index;
 
     public readonly GameTaskWorkflow GameTaskWorkflow = gameTaskWorkflow;
@@ -167,7 +177,7 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
             case >= TaskComplete or TaskAbort:
                 AppendSingle(SuccessMessage);
                 break;
-            case TaskGhostSkip or TaskSelfSkip or TaskTagSkip:
+            case TaskGhostSkip or TaskSelfSkip or TaskTagSkip or SkipAllTask:
                 AppendSingle(SkipMessage);
                 break;
             default:
@@ -262,6 +272,14 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
 
     protected virtual void OnError()
     {
+    }
+
+    public void Reset()
+    {
+        _progress = TaskDefault;
+        _initialized = false;
+        _completed = false;
+        Destroyed = false;
     }
 
 

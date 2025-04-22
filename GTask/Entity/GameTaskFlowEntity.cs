@@ -13,6 +13,8 @@ public partial class GameTaskFlowEntity : RefCounted, IBinding
     public int Id { get; set; }
 
     public string Name { get; set; } = string.Empty;
+    
+    public string WithScene { get; set; } = string.Empty;
 
     public string TargetApp { get; set; } = string.Empty;
 

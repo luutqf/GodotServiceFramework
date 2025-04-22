@@ -120,11 +120,23 @@ public partial class TaskWorkflowService : AutoGodotService
             Name = $"{flowEntity.Name}",
             SessionId = flowEntity.SessionId,
             TaskEntities = flowEntity.TaskEntities,
+            WithSceneName = flowEntity.WithScene
         };
 
         flowEntity.FlowId = workflow.Id;
 
         return workflow;
+    }
+
+    [BindingCache]
+    public GameTaskWorkflow FlowToFlow(GameTaskWorkflow source)
+    {
+        return new GameTaskWorkflow
+        {
+            Name = source.Name,
+            SessionId = source.SessionId,
+            TaskEntities = source.TaskEntities,
+        };
     }
 
 
@@ -164,5 +176,10 @@ public partial class TaskWorkflowService : AutoGodotService
         if (taskContext != null) workflow.Context = taskContext;
 
         return workflow;
+    }
+
+    public GameTaskWorkflow GetTaskWorkflow(string taskEntityName)
+    {
+        return GetTaskWorkflowByEntityName(taskEntityName);
     }
 }
