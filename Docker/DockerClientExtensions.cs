@@ -572,7 +572,7 @@ public static class DockerClientExtensions
             }
         });
 
-        return await docker.WaitForImage(imageAddr, cts, progress);
+        return await docker.WaitForImage(imageAddr, cts, progress, 60);
     }
 
 
@@ -603,13 +603,21 @@ public static class DockerClientExtensions
     }
 
 
+    /// <summary>
+    /// 拉取镜像,最后验证是否存在这个镜像
+    /// </summary>
+    /// <param name="this"></param>
+    /// <param name="url"></param>
+    /// <param name="cts"></param>
+    /// <param name="callback"></param>
+    /// <returns></returns>
     public static async Task<bool> PullImage(this DockerClient @this, string url, CancellationTokenSource cts,
         Action<bool>? callback = null
     )
     {
         var imageInfo = DockerImageParser.Parse(url);
 
-        var progress = new Progress<JSONMessage>(message => { Logger.Info(message.Stream); });
+        var progress = new Progress<JSONMessage>(message => { Logger.Info($"pull-> {message.Stream}"); });
 
         _ = @this.Images.CreateImageAsync(new ImagesCreateParameters()
             {
@@ -643,14 +651,14 @@ public static class DockerClientExtensions
 
 
     public static async Task<bool> WaitForImage(this DockerClient client, string imageUrl, CancellationTokenSource cts,
-        Action<int>? progress)
+        Action<int>? progress, int count = 30)
     {
         var retries = 0;
         while (true)
         {
             retries++;
             progress?.Invoke(retries);
-            if (retries > 30)
+            if (retries > count)
             {
                 await cts.CancelAsync();
                 return false;

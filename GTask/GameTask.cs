@@ -188,72 +188,82 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
 
     public async Task Start0()
     {
-        lock (this)
+        //同一个任务不可重入
+        if (Monitor.TryEnter(Index))
         {
-            //这里要考虑并发问题,存在同时触发下一个任务的情况
-            if (Progress != TaskDefault) return;
-
-
-            if (Args.TryGetValue("skipKeys", out var skipKeys))
+            try
             {
-                if (skipKeys is JArray array)
+                //这里要考虑并发问题,存在同时触发下一个任务的情况
+                if (Progress != TaskDefault) return;
+
+
+                if (Args.TryGetValue("skipKeys", out var skipKeys))
                 {
-                    foreach (var jToken in array)
+                    if (skipKeys is JArray array)
                     {
-                        _skipKeys.Add(jToken.ToString());
+                        foreach (var jToken in array)
+                        {
+                            _skipKeys.Add(jToken.ToString());
+                        }
                     }
                 }
-            }
 
-            if (Args.TryGetValue("skipNoKeys", out var skipNoKeys))
-            {
-                if (skipNoKeys is JArray array)
+                if (Args.TryGetValue("skipNoKeys", out var skipNoKeys))
                 {
-                    foreach (var jToken in array)
+                    if (skipNoKeys is JArray array)
                     {
-                        _skipNoKeys.Add(jToken.ToString());
+                        foreach (var jToken in array)
+                        {
+                            _skipNoKeys.Add(jToken.ToString());
+                        }
                     }
                 }
-            }
 
-            //检查任务是否可以跳过, 如果包含这个tag, 则跳过
-            if (_skipKeys.Any(key => GameTaskWorkflow.Context.HasTag(key)))
+                //检查任务是否可以跳过, 如果包含这个tag, 则跳过
+                if (_skipKeys.Any(key => GameTaskWorkflow.Context.HasTag(key)))
+                {
+                    AppendSingle($"{Name} 跳过 -> {skipKeys}");
+                    Progress = TaskSelfSkip;
+                    return;
+                }
+
+
+                //如果不包含这个tag,则跳过
+                if (_skipNoKeys.Any(key => !GameTaskWorkflow.Context.HasTag(key)))
+                {
+                    AppendSingle($"{Name} 跳过 -> {skipKeys}");
+                    Progress = TaskSelfSkip;
+                    return;
+                }
+
+
+                Progress = TaskStart;
+
+
+                try
+                {
+                    AppendResult(StartMessage);
+                    var progress = await Start();
+                    Progress = progress;
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e);
+                    Progress = -1;
+                }
+            }
+            finally
             {
-                AppendSingle($"{Name} 跳过 -> {skipKeys}");
-                Progress = TaskSelfSkip;
-                return;
+                Monitor.Exit(this);
             }
-
-
-            //如果不包含这个tag,则跳过
-            if (_skipNoKeys.Any(key => !GameTaskWorkflow.Context.HasTag(key)))
-            {
-                AppendSingle($"{Name} 跳过 -> {skipKeys}");
-                Progress = TaskSelfSkip;
-                return;
-            }
-
-
-            Progress = TaskStart;
-        }
-
-        try
-        {
-            AppendResult(StartMessage);
-            var progress = await Start();
-            Progress = progress;
-        }
-        catch (Exception e)
-        {
-            Logger.Error(e);
-            Progress = -1;
         }
     }
 
     /// <summary>
     /// 执行这个任务, 任务执行期间需要自行维护自己的生命周期,  自己想办法, 因为某些动作可能是异步的
     /// </summary>
-    public abstract Task<int> Start();
+    public abstract Task<int>
+        Start();
 
 
     private void OnCompleted0()
@@ -282,25 +292,16 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
         Destroyed = false;
     }
 
-
     public const int TaskAbort = -2;
-
     public const int TaskError = -1;
-
     public const int TaskStart = 1;
-
     public const int TaskDefault = 0;
-
     public const int TaskComplete = 100;
-
     public const int TaskSelfSkip = -5;
-
     public const int TaskTagSkip = -3;
-
     public const int TaskGhostSkip = -4;
-
     public const int SkipAllTask = -100;
 
 
-    // public const int TaskTerminate = 100;
+// public const int TaskTerminate = 100;
 }
