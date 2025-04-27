@@ -254,7 +254,8 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
             }
             finally
             {
-                Monitor.Exit(this);
+                if (Monitor.IsEntered(Index))
+                    Monitor.Exit(Index);
             }
         }
     }
