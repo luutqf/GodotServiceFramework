@@ -67,7 +67,7 @@ public partial class Controllers : Service.AutoGodotService
             }
             catch (Exception e)
             {
-                Logger.Error(e);
+                Log.Error(e);
             }
         }
     }
@@ -395,7 +395,7 @@ public partial class Controllers : Service.AutoGodotService
         }
         catch (Exception e)
         {
-            Logger.Error(e);
+            Log.Error(e);
             return new GodotResult<TR?>(500, default, e.Message);
         }
     }

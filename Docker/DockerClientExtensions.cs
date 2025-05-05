@@ -58,7 +58,7 @@ public static class DockerClientExtensions
         }
         catch (Exception e)
         {
-            Logger.Error(e);
+            Log.Error(e);
             return "";
         }
     }
@@ -176,11 +176,11 @@ public static class DockerClientExtensions
         var (stdout, stderr) = await execStream.ReadOutputToEndAsync(default);
         if (string.IsNullOrEmpty(stderr))
         {
-            Logger.Debug($"stdout: {stdout}");
+            Log.Debug($"stdout: {stdout}");
         }
         else
         {
-            Logger.Error($"stderr: {stderr}");
+            Log.Error($"stderr: {stderr}");
         }
 
         return string.IsNullOrWhiteSpace(stderr);
@@ -329,7 +329,7 @@ public static class DockerClientExtensions
         }
         catch (Exception ex)
         {
-            Logger.Warn($"监听容器文件中止: {ex.Message}");
+            Log.Warn($"监听容器文件中止: {ex.Message}");
         }
     }
 
@@ -395,7 +395,7 @@ public static class DockerClientExtensions
         }
         catch (Exception ex)
         {
-            Logger.Warn($"监听容器文件中止: {ex.Message}");
+            Log.Warn($"监听容器文件中止: {ex.Message}");
         }
     }
 
@@ -455,7 +455,7 @@ public static class DockerClientExtensions
         }
         catch (Exception ex)
         {
-            Logger.Warn($"监听容器文件中止: {ex.Message}");
+            Log.Warn($"监听容器文件中止: {ex.Message}");
         }
 
         return builder.ToString();
@@ -489,7 +489,7 @@ public static class DockerClientExtensions
         }
         catch (Exception e)
         {
-            Logger.Error(e);
+            Log.Error(e);
             return (null, null);
         }
     }
@@ -564,11 +564,11 @@ public static class DockerClientExtensions
         {
             if (b)
             {
-                Logger.Info("镜像下载成功");
+                Log.Info("镜像下载成功");
             }
             else
             {
-                Logger.Error("守护镜像下载失败");
+                Log.Error("守护镜像下载失败");
             }
         });
 
@@ -594,7 +594,7 @@ public static class DockerClientExtensions
             if (imagesListResponse.RepoTags == null) continue;
             if (!imagesListResponse.RepoTags.Any(repoTag => repoTag.Contains(url))) continue;
 
-            Logger.Info($"Image: {url}");
+            Log.Info($"Image: {url}");
             return true;
         }
 
@@ -617,7 +617,7 @@ public static class DockerClientExtensions
     {
         var imageInfo = DockerImageParser.Parse(url);
 
-        var progress = new Progress<JSONMessage>(message => { Logger.Info($"pull-> {message.Stream}"); });
+        var progress = new Progress<JSONMessage>(message => { Log.Info($"pull-> {message.Stream}"); });
 
         _ = @this.Images.CreateImageAsync(new ImagesCreateParameters()
             {
@@ -633,7 +633,7 @@ public static class DockerClientExtensions
                 message.Status?.Contains("Downloaded newer image") == true ||
                 message.Status?.Contains("Image is up to date") == true)
             {
-                Logger.Info("Image is up to date");
+                Log.Info("Image is up to date");
                 completed.TrySetResult(true);
                 callback?.Invoke(true);
             }
@@ -664,7 +664,7 @@ public static class DockerClientExtensions
                 return false;
             }
 
-            Logger.Info("正在等待镜像就绪");
+            Log.Info("正在等待镜像就绪");
             var has = await client.HasImage(imageUrl);
             if (has)
             {
@@ -712,7 +712,7 @@ public static class DockerClientExtensions
         }
         catch (Exception e)
         {
-            Logger.Error(e.Message);
+            Log.Error(e.Message);
             return false;
         }
     }

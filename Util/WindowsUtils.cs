@@ -24,7 +24,7 @@ public class WindowsUtils
         }
         catch (Exception e)
         {
-            Logger.Error(e);
+            Log.Error(e);
         }
     }
 }

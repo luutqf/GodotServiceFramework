@@ -13,7 +13,6 @@ public static class GameTaskExtensions
     public static void AppendMessage(this GameTask gameTask, string message, int level = 1, string type = "session",
         Dictionary<string, object>? args = null)
     {
-        
     }
 
     /// <summary>
@@ -27,6 +26,21 @@ public static class GameTaskExtensions
     public static void AppendMessage(this GameTaskWorkflow workflow, string message, int level = 1,
         string type = "session", Dictionary<string, object>? args = null)
     {
-        
+    }
+
+    /// <summary>
+    /// 获取Arg
+    /// </summary>
+    /// <param name="task"></param>
+    /// <param name="keys"></param>
+    /// <returns></returns>
+    public static object? GetArg(this GameTask task, params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            if (task.Args.TryGetValue(key, out var arg)) return arg;
+        }
+
+        return null;
     }
 }

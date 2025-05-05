@@ -1,7 +1,4 @@
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using Godot;
 using GodotServiceFramework.Binding;
@@ -179,7 +176,7 @@ public interface IDataNode
         // ReSharper disable once SuspiciousTypeConversion.Global
         if (this is not Node node) return;
         Dict.Remove(node.GetInstanceId(), out var value);
-        Logger.Debug($"remove dataNode {node.GetInstanceId()}-> {value.T} id: {value.I}");
+        Log.Debug($"remove dataNode {node.GetInstanceId()}-> {value.T} id: {value.I}");
     }
 
     public int GetBindId()

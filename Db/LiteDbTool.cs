@@ -27,7 +27,7 @@ public static class LiteDbTool
             FileUtils.CreateDirectoryWithCheck(directoryName);
         }
 
-        Logger.Info($"databasePath: {path}");
+        Log.Info($"databasePath: {path}");
 
         db = new LiteDatabase(path);
         LiteDbConnections[path] = db;
@@ -42,7 +42,7 @@ public static class LiteDbTool
         }
         catch (Exception e)
         {
-            Logger.Error($"Insert error: {e.Message}");
+            Log.Error($"Insert error: {e.Message}");
             return false;
         }
     }

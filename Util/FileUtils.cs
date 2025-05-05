@@ -32,7 +32,7 @@ public static class FileUtils
         catch (Exception ex)
         {
             // 处理可能的异常
-            Logger.Error($"创建文件 '{filePath}' 时出错: {ex.Message}");
+            Log.Error($"创建文件 '{filePath}' 时出错: {ex.Message}");
             return false;
         }
     }

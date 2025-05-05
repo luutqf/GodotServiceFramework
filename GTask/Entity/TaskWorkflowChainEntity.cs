@@ -84,7 +84,7 @@ public partial class TaskWorkflowChainEntity : RefCounted, IBinding
                 if (!condition.ResultOutline) return;
                 OnResultLine.Invoke(taskFlow.Name, ints, s, arg3, arg4);
             };
-            Logger.Error($"请注意,这个任务所在的Session {taskFlow.SessionId}");
+            Log.Error($"请注意,这个任务所在的Session {taskFlow.SessionId}");
 
             taskFlow.Start();
             OnFlowStart.Invoke(condition.FlowEntityName, taskFlow);
@@ -97,7 +97,7 @@ public partial class TaskWorkflowChainEntity : RefCounted, IBinding
         OnTag = delegate { };
         OnFlowStart = delegate { };
         OnResultLine = delegate { };
-        Logger.Error("现在所有任务都完成了");
+        Log.Error("现在所有任务都完成了");
     }
 
 

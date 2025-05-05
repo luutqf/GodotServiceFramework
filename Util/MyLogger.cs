@@ -15,7 +15,7 @@ namespace GodotServiceFramework.Util;
  */
 // [AutoGlobalService]
 [Order(-2000)]
-public partial class Logger : AutoGodotService
+public partial class MyLogger : AutoGodotService
 {
     public event Action<string?, BbColor> MessageLogged = delegate { };
 
@@ -23,6 +23,7 @@ public partial class Logger : AutoGodotService
 
     public static LogLevel CurrentLevel { get; set; } = LogLevel.Info;
 
+    public static MyLogger? Instance { get; private set; }
 
     /// <summary>
     /// Log a message
@@ -57,10 +58,8 @@ public partial class Logger : AutoGodotService
         {
             return;
         }
-        // if()
 
-        var logger = Services.Get<Logger>();
-        if (logger == null)
+        if (Instance == null)
         {
             Console.WriteLine(message);
             return;
@@ -70,31 +69,30 @@ public partial class Logger : AutoGodotService
         {
             case LogLevel.Info:
             {
-                // if ()
-                logger.BaseLog(message, color);
+                Instance.BaseLog(message, color);
                 break;
             }
             case LogLevel.Warn:
             {
-                logger.LogWarning(message, color);
+                Instance.LogWarning(message, color);
 
                 break;
             }
             case LogLevel.Todo:
             {
-                logger.LogTodo(message, color);
+                Instance.LogTodo(message, color);
 
                 break;
             }
             case LogLevel.Debug:
             {
-                logger.LogDebug(message, color);
+                Instance.LogDebug(message, color);
 
                 break;
             }
             case LogLevel.Error:
             {
-                logger.PrintErr(message, color);
+                Instance.PrintErr(message, color);
                 break;
             }
             default:
@@ -250,6 +248,7 @@ public partial class Logger : AutoGodotService
 
     public override void Init()
     {
+        Instance = this;
     }
 
     public override void Destroy()

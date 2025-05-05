@@ -66,7 +66,7 @@ public static class Services
         }
         catch (Exception e)
         {
-            Logger.Error(e);
+            Log.Error(e);
             obj = null;
             return false;
         }

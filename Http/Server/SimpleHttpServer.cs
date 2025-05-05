@@ -1,10 +1,6 @@
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net;
 using System.Runtime.InteropServices;
-using System.Text;
 using DotNet.Globbing;
-using Godot;
 using GodotServiceFramework.Util;
 
 namespace GodotServiceFramework.Http.Server;
@@ -77,7 +73,7 @@ public class SimpleHttpServer : ICloseable
             }
             catch (HttpListenerException e)
             {
-                Logger.Error(e);
+                Log.Error(e);
             }
             finally
             {
@@ -134,7 +130,7 @@ public class SimpleHttpServer : ICloseable
     {
         if (Routes.Contains(route))
         {
-            Logger.Error($"{route} is already registered");
+            Log.Error($"{route} is already registered");
             return;
         }
 

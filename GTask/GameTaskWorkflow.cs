@@ -182,7 +182,7 @@ public partial class GameTaskWorkflow : RefCounted, IEnumerable<GameTask[]>, IBi
             OnResultLine.Invoke(index, title, line, level);
         }
 
-        Logger.Info(line);
+        Log.Info(line);
     }
 
     /// <summary>
@@ -311,7 +311,7 @@ public partial class GameTaskWorkflow : RefCounted, IEnumerable<GameTask[]>, IBi
         {
             if (name == Name && Unique)
             {
-                Logger.Warn("任务名称重复");
+                Log.Warn("任务名称重复");
                 return false;
             }
         }
@@ -414,7 +414,7 @@ public partial class GameTaskWorkflow : RefCounted, IEnumerable<GameTask[]>, IBi
 
                 if (workFlow.TaskProgress[statusCurrentIndex].Any(l => l == GameTask.TaskError))
                 {
-                    Logger.Debug("有任务失败了");
+                    Log.Debug("有任务失败了");
                     return;
                 }
 
@@ -422,7 +422,7 @@ public partial class GameTaskWorkflow : RefCounted, IEnumerable<GameTask[]>, IBi
                 if (!workFlow.TaskProgress[statusCurrentIndex].All(l =>
                         l is >= GameTask.TaskComplete or GameTask.TaskTagSkip or GameTask.TaskSelfSkip))
                 {
-                    Logger.Debug("还有任务需要完成");
+                    Log.Debug("还有任务需要完成");
                     return;
                 }
 
@@ -434,14 +434,14 @@ public partial class GameTaskWorkflow : RefCounted, IEnumerable<GameTask[]>, IBi
                 var nextTasks = this.GetNextTasks(index, out var finished, out var nextIndex);
                 if (nextTasks.Length > 0)
                 {
-                    Logger.Debug($"执行下一组任务: {nextTasks.Length}");
+                    Log.Debug($"执行下一组任务: {nextTasks.Length}");
                     this.RunNextTasks(nextTasks, nextIndex);
                 }
                 else
                 {
                     if (finished)
                     {
-                        Logger.Debug("任务流执行完毕");
+                        Log.Debug("任务流执行完毕");
                         StopWorkflow();
                     }
                 }

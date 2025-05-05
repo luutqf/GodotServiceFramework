@@ -1,5 +1,4 @@
 using Godot;
-using Godot.Collections;
 using GodotServiceFramework.Binding;
 using GodotServiceFramework.Data;
 using GodotServiceFramework.Util;
@@ -29,15 +28,12 @@ public static class DataNodeExtensions
         try
         {
             var binding = node._Parse(args);
-            Logger.Info(binding);
-            if (binding is not null)
-            {
-                node.InitBindData(binding);
-            }
+            Log.Info(binding);
+            node.InitBindData(binding);
         }
         catch (Exception e)
         {
-            Logger.Error(e);
+            Log.Error(e);
         }
     }
 

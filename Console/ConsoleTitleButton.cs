@@ -16,7 +16,7 @@ public partial class ConsoleTitleButton : HBoxContainer
     public override void _Ready()
     {
         Visible = true;
-        Logger.Info("成功加载了一个ConsoleTitleButton");
+        Log.Info("成功加载了一个ConsoleTitleButton");
 
         _consoleTitleButton?.Connect(BaseButton.SignalName.Pressed, Callable.From(() =>
         {
@@ -24,7 +24,7 @@ public partial class ConsoleTitleButton : HBoxContainer
                 this.GetRoot<ConsoleContainer>()!.OpenSigmusConsole(SigmusConsole);
             else
             {
-                Logger.Info("还没设置Console");
+                Log.Info("还没设置Console");
             }
         }));
 

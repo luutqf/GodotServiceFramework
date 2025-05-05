@@ -1,7 +1,6 @@
 ﻿using System.Reflection;
 using AspectInjector.Broker;
 using Godot;
-using GodotServiceFramework.Context;
 using GodotServiceFramework.Context.Service;
 using GodotServiceFramework.Util;
 
@@ -36,7 +35,7 @@ public class AutowiredAttribute : Attribute
                 }
                 catch (Exception e)
                 {
-                    Logger.Warn(e);
+                    Log.Warn(e);
                 }
             }
 

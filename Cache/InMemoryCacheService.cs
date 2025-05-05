@@ -129,7 +129,7 @@ public class InMemoryCacheService(IMemoryCache? cache = null)
         }
         catch (Exception e)
         {
-            Logger.Error(e);
+            Log.Error(e);
         }
     }
 }

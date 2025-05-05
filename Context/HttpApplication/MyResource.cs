@@ -1,5 +1,3 @@
-using Godot;
-using Godot.Collections;
 using GodotServiceFramework.Util;
 using Grapevine;
 using Newtonsoft.Json;
@@ -21,7 +19,7 @@ public class MyResource
 
         var text = await reader.ReadToEndAsync();
 
-        Logger.Info(context.Request.Endpoint);
+        Log.Info(context.Request.Endpoint);
 
         var segments = context.Request.Endpoint.Split('/');
         if (segments.Length <= 3)
@@ -32,8 +30,8 @@ public class MyResource
         {
             var control = segments[2];
             var resource = string.Join("/", segments.Skip(3));
-            Logger.Info($"control: {control}");
-            Logger.Info($"resource: {resource}");
+            Log.Info($"control: {control}");
+            Log.Info($"resource: {resource}");
             try
             {
                 var result =
@@ -44,7 +42,7 @@ public class MyResource
             }
             catch (Exception e)
             {
-                Logger.Warn(e);
+                Log.Warn(e);
                 await context.Response.SendResponseAsync(
                     HttpStatusCode.InternalServerError, e.Message);
             }

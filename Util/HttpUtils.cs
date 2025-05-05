@@ -1,6 +1,5 @@
 using System.Net;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace GodotServiceFramework.Util;
 
@@ -21,7 +20,7 @@ public class HttpUtils
         }
         catch (Exception e)
         {
-            Logger.Warn(e);
+            Log.Warn(e);
         }
     }
 }

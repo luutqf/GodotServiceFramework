@@ -1,4 +1,3 @@
-using GodotServiceFramework.Context.Session;
 using GodotServiceFramework.Util;
 
 namespace GodotServiceFramework.GTask;
@@ -11,17 +10,17 @@ public class DelayTask(GameTaskWorkflow gameTaskWorkflow, int[] index, Dictionar
 
     public override void Init()
     {
-        Logger.Debug("DelayTask hooked");
+        Log.Debug("DelayTask hooked");
     }
 
     public override void Destroy()
     {
-        Logger.Debug("DelayTask unhooked");
+        Log.Debug("DelayTask unhooked");
     }
 
     public override async Task<int> Start()
     {
-        Logger.Info($"DelayTask started : {Args["sleep"]}");
+        Log.Info($"DelayTask started : {Args["sleep"]}");
         // if (Args["sleep"] is not int i) return -1;
         var i = int.Parse(Args["sleep"].ToString()!);
 
@@ -34,7 +33,7 @@ public class DelayTask(GameTaskWorkflow gameTaskWorkflow, int[] index, Dictionar
             // this.EmitSessionSignal("SuperChat")
         }
 
-        Logger.Debug("DelayTask sleep");
+        Log.Debug("DelayTask sleep");
 
         // Thread.Sleep((int)(1000 * i));
         return 100;

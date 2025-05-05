@@ -1,13 +1,16 @@
-﻿using GodotServiceFramework.Util;
+﻿using GodotServiceFramework.Context.Service;
+using GodotServiceFramework.Util;
 using Newtonsoft.Json.Linq;
+using SigmusV2.GodotServiceFramework.Context;
+using SigmusV2.GodotServiceFramework.Util;
 
 namespace GodotServiceFramework.GTask;
 
 public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, Dictionary<string, object> args)
+    : IMessageConsumer
 {
-    private bool _initialized;
+    public ulong Id = SnowflakeIdGenerator.NextUId();
 
-    private bool _completed;
     protected string TaskId => $"{GameTaskWorkflow.Id}-{Index[0]}-{Index[1]}";
 
     private readonly List<string> _skipKeys = [];
@@ -15,6 +18,8 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
     private readonly List<string> _skipNoKeys = [];
 
     protected GameTaskContext Context => GameTaskWorkflow.Context;
+
+    #region 日志相关
 
     public void AppendResult(string line)
     {
@@ -36,8 +41,8 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
         GameTaskWorkflow.AppendResult(Index, Title, $"{line}", 4);
     }
 
+    #endregion
 
-    public bool Destroyed;
 
     /// <summary>
     /// 检查任务的执行进度, 管理器通过调用这个方法, 更新任务序列的状态, 并决定是否开始执行下一个任务.
@@ -47,7 +52,7 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
         get => _progress;
         protected set
         {
-            if (_progress is >= TaskComplete or TaskError or TaskAbort or SkipAllTask) return;
+            if (_progress is >= TaskComplete or TaskError or TaskAbort or SkipAllTask or TaskDestroyed) return;
 
             if (_progress == value) return;
 
@@ -57,6 +62,10 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
             //这里,如果是100, 通知任务管理器
             switch (value)
             {
+                case TaskDestroyed:
+                {
+                    break;
+                }
                 case SkipAllTask:
                 {
                     OnCompleted0();
@@ -65,7 +74,7 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
                     break;
                 }
                 case TaskComplete: //只进入一次
-                    Logger.Info($"{Name} in {GameTaskWorkflow.Id} task workflow completed.");
+                    Log.Info($"{Name} in {GameTaskWorkflow.Id} task workflow completed.");
 
                     OnCompleted0();
                     Destroy0();
@@ -76,7 +85,7 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
                     OnCompleted0();
                     break;
                 case TaskError: //只进入一次
-                    Logger.Info($"{Name} in {GameTaskWorkflow} task workflow error.");
+                    Log.Info($"{Name} in {GameTaskWorkflow} task workflow error.");
                     // OnError();
                     Destroy0();
                     GameTaskWorkflow.StopWorkflow(true, true);
@@ -89,13 +98,13 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
                     GameTaskWorkflow.StopWorkflow(true);
                     break;
                 case TaskSelfSkip: //后台运行,不自动销毁. 当任务全部结束时, 自动销毁. 视为主动跳过
-                    Logger.Info($"{Name} in {GameTaskWorkflow} task workflow backend.");
+                    Log.Info($"{Name} in {GameTaskWorkflow} task workflow backend.");
                     Task.Run(() => { GameTaskWorkflow.CompleteTask(Index, _progress); });
                     break;
                 case TaskTagSkip:
                     //跳过不会执行初始化, 销毁, 没有任何操作, 直接进行下一个.
                     Destroy0();
-                    Logger.Info($"{Name} in {GameTaskWorkflow} task workflow skipped.");
+                    Log.Info($"{Name} in {GameTaskWorkflow} task workflow skipped.");
                     Task.Run(() => { GameTaskWorkflow.CompleteTask(Index, _progress); });
 
                     break;
@@ -103,11 +112,7 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
                     //什么都不做
                     break;
                 case TaskStart:
-                    if (!_initialized)
-                    {
-                        Init();
-                        _initialized = true;
-                    }
+                    Init();
 
                     break;
             }
@@ -116,15 +121,6 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
 
     public readonly Dictionary<string, object> Args = args;
 
-    public object? GetArg(params string[] keys)
-    {
-        foreach (var key in keys)
-        {
-            if (Args.TryGetValue(key, out var arg)) return arg;
-        }
-
-        return null;
-    }
 
     public readonly int[] Index = index;
 
@@ -163,15 +159,8 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
 
     public void Destroy0()
     {
-        lock (this)
-        {
-            if (Destroyed) return;
-            Destroyed = true;
-        }
-
         Destroy();
         //主动中止也算成功
-        var success = Progress is >= TaskComplete or TaskGhostSkip or TaskSelfSkip or TaskTagSkip or TaskAbort;
         switch (Progress)
         {
             case >= TaskComplete or TaskAbort:
@@ -184,6 +173,10 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
                 AppendError(FailMessage);
                 break;
         }
+
+        Progress = TaskDestroyed;
+
+        Services.Get<GameTaskFactory>()?.Remove(Id);
     }
 
     public async Task Start0()
@@ -248,7 +241,7 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
                 }
                 catch (Exception e)
                 {
-                    Logger.Error(e);
+                    Log.Error(e);
                     Progress = -1;
                 }
             }
@@ -271,13 +264,15 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
     {
         lock (this)
         {
-            if (_completed) return;
-            _completed = true;
             OnCompleted();
         }
     }
 
     protected virtual void OnCompleted()
+    {
+    }
+
+    protected virtual void OnMessage(string channel, object message)
     {
     }
 
@@ -288,9 +283,6 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
     public void Reset()
     {
         _progress = TaskDefault;
-        _initialized = false;
-        _completed = false;
-        Destroyed = false;
     }
 
     public const int TaskAbort = -2;
@@ -302,7 +294,5 @@ public abstract class GameTask(GameTaskWorkflow gameTaskWorkflow, int[] index, D
     public const int TaskTagSkip = -3;
     public const int TaskGhostSkip = -4;
     public const int SkipAllTask = -100;
-
-
-// public const int TaskTerminate = 100;
+    public const int TaskDestroyed = -1000;
 }

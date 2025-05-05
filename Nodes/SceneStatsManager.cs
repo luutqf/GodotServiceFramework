@@ -1,7 +1,6 @@
 using Godot;
 using Godot.Collections;
 using GodotServiceFramework.Binding;
-using GodotServiceFramework.Context;
 using GodotServiceFramework.Context.Service;
 using GodotServiceFramework.Context.Session;
 using GodotServiceFramework.Data;
@@ -61,7 +60,7 @@ public partial class SceneStatsManager : AutoGodotService
 
     public override void _Ready()
     {
-        Logger.Info("场景管理器已加载");
+        Log.Info("场景管理器已加载");
     }
 
     public Node? DefaultParent
@@ -129,7 +128,7 @@ public partial class SceneStatsManager : AutoGodotService
             return true;
         }
 
-        Logger.Error(changeSceneToPacked);
+        Log.Error(changeSceneToPacked);
         return false;
     }
 

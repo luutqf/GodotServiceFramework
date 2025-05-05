@@ -14,7 +14,7 @@ public partial class AutoGodotHttpApplication : AutoGodotService
 
     public override void Init()
     {
-        Logger.Info("初始化http server");
+        Log.Info("初始化http server");
 
         try
         {

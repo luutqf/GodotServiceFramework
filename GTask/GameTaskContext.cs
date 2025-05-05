@@ -1,11 +1,14 @@
+using Godot;
 using GodotServiceFramework.GTask;
+using SigmusV2.GodotServiceFramework.Context;
 
-public class GameTaskContext
+[Channel(["task"])]
+public class GameTaskContext : IMessageConsumer
 {
     public string Name { get; set; } = string.Empty;
 
 
-    public Dictionary<string, int> ErrorCounts = [];
+    public readonly Dictionary<string, int> ErrorCounts = [];
 
     public Dictionary<string, object> CommonArgs { get; set; } = [];
 
@@ -18,6 +21,7 @@ public class GameTaskContext
 
     public GameTaskContext()
     {
+        GameMessageBus.Register(this);
     }
 
     #region session相关,待定
@@ -67,6 +71,15 @@ public class GameTaskContext
         }
     }
 
+    public void PutTags(params string[] tags)
+    {
+        foreach (var tag in tags)
+        {
+            FlowTags.Add(tag);
+            OnTag.Invoke(tag, -1);
+        }
+    }
+
     #endregion
 
 
@@ -88,5 +101,13 @@ public class GameTaskContext
         FlowTags.Clear();
         OnTag = delegate { };
         Workflows.Clear();
+    }
+
+    public void ReceiveMessage(Variant message)
+    {
+        if (message.VariantType == Variant.Type.String)
+        {
+            PutTag(-2, message.AsString());
+        }
     }
 }

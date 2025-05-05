@@ -90,7 +90,7 @@ public partial class MyScrollContainer : ScrollContainer
         }
         catch (Exception e)
         {
-            Logger.Error(e);
+            Log.Error(e);
         }
     }
 }

@@ -48,7 +48,7 @@ public static class SqliteTool
                 FileUtils.CreateDirectoryWithCheck(directoryName);
             }
 
-            Logger.Info($"databasePath: {path}");
+            Log.Info($"databasePath: {path}");
             var sqLiteConnection = new SQLiteConnection(path);
 
             // sqLiteConnection.CreateCommand("PRAGMA journal_mode=WAL;").ExecuteNonQuery();
@@ -99,14 +99,14 @@ public static class SqliteTool
         // var fullPath = MockHttpServerConfiguration.BaseSqlitePath + path + ".server";
         if (!File.Exists(path))
         {
-            Logger.Debug($"file {path} not exist");
+            Log.Debug($"file {path} not exist");
             return;
         }
 
         if (SqLiteConnections.TryGetValue(path, out var value))
         {
             value.Close();
-            Logger.Debug($"sqlite {path} is closed");
+            Log.Debug($"sqlite {path} is closed");
         }
 
         File.Delete(path);

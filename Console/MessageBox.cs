@@ -57,8 +57,6 @@ public partial class MessageBox : VBoxContainer
         {
             case "text":
             {
-                // Logger.Info(message.Text);
-
                 if (line == null)
                 {
                     line = Services.Get<SceneStatsManager>()!.InstantiateScene<TextLineControl>(readyCallBack: @this =>
@@ -76,7 +74,7 @@ public partial class MessageBox : VBoxContainer
             }
             case "scene":
             {
-                Logger.Info($"打开场景: {message.Scene}");
+                Log.Info($"打开场景: {message.Scene}");
 
                 //如果场景已存在, 则
                 var children = GetChildren();

@@ -38,7 +38,7 @@ public class DefaultHttpServer
                 }
                 catch (Exception e)
                 {
-                    Logger.Info($"not support ipv4 {e.Message}");
+                    Log.Info($"not support ipv4 {e.Message}");
 
                     // throw;
                 }
@@ -54,7 +54,7 @@ public class DefaultHttpServer
                     }
                     catch (Exception e)
                     {
-                        Logger.Error(e.Message);
+                        Log.Error(e.Message);
                     }
                 }
 
@@ -69,7 +69,7 @@ public class DefaultHttpServer
             }
             catch (HttpListenerException e)
             {
-                Logger.Error(e);
+                Log.Error(e);
                 errorCallback.Invoke();
             }
             finally

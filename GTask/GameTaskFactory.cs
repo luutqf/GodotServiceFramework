@@ -1,5 +1,4 @@
 ﻿using Godot;
-using GodotServiceFramework.Context;
 using GodotServiceFramework.Context.Service;
 using GodotServiceFramework.Db;
 using GodotServiceFramework.GTask.Entity;
@@ -13,7 +12,7 @@ namespace GodotServiceFramework.GTask;
 /// </summary>
 // [AutoGlobalService]
 // ReSharper disable once ClassNeverInstantiated.Global
-public partial class GameTaskFactory : Node, ICloseable, IService
+public partial class GameTaskFactory : AutoGodotService, ICloseable
 {
     /// <summary>
     /// 这里缓存着任务名称和类型
@@ -21,6 +20,13 @@ public partial class GameTaskFactory : Node, ICloseable, IService
     private readonly Dictionary<string, Type> _taskTypes = [];
 
     public SQLiteConnection? Db;
+
+    private readonly Dictionary<ulong, GameTask> _tasks = [];
+
+    private static readonly int[] DefaultArgs = [0, 0];
+
+    public event Action<GameTask> OnTaskAdded = delegate { };
+
 
     public override void _Ready()
     {
@@ -45,11 +51,17 @@ public partial class GameTaskFactory : Node, ICloseable, IService
             {
                 if (type.IsAbstract || type.IsInterface) continue;
                 var instance =
-                    (GameTask)Activator.CreateInstance(type, null, new[] { 0, 0 }, new Dictionary<string, object>())!;
+                    (GameTask)Activator.CreateInstance(type, null, DefaultArgs, new Dictionary<string, object>())!;
                 _taskTypes.TryAdd(instance.Name, type);
-                Logger.Debug($"Task {instance.Name} has been found");
+                Log.Debug($"Task {instance.Name} has been found");
             }
         }
+    }
+
+
+    public GameTask? TaskFromId(ulong id)
+    {
+        return _tasks.GetValueOrDefault(id);
     }
 
 
@@ -67,7 +79,7 @@ public partial class GameTaskFactory : Node, ICloseable, IService
     {
         if (!_taskTypes.TryGetValue(taskName, out var type))
         {
-            Logger.Error($"Task {taskName} not found");
+            Log.Error($"Task {taskName} not found");
             return null!;
         }
 
@@ -75,6 +87,9 @@ public partial class GameTaskFactory : Node, ICloseable, IService
 
         var gameTask = (GameTask)instance!;
         gameTask.Title = title;
+
+        _tasks.TryAdd(gameTask.Id, gameTask);
+        OnTaskAdded.Invoke(gameTask);
         return gameTask;
     }
 
@@ -84,11 +99,17 @@ public partial class GameTaskFactory : Node, ICloseable, IService
         Db?.Dispose();
     }
 
-    public void Init()
+    public void Remove(ulong id)
+    {
+        _tasks.Remove(id);
+    }
+
+
+    public override void Init()
     {
     }
 
-    public void Destroy()
+    public override void Destroy()
     {
         Close();
     }

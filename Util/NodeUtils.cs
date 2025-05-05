@@ -1,12 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using Godot;
 using GodotServiceFramework.Binding;
-using GodotServiceFramework.Context;
 using GodotServiceFramework.Context.Service;
-using GodotServiceFramework.Context.Session;
 using GodotServiceFramework.Exceptions;
 using AutoGodotService = GodotServiceFramework.Context.Service.AutoGodotService;
 
@@ -130,7 +125,7 @@ public static class NodeUtils
         }
         catch (Exception e)
         {
-            Logger.Warn($"Failed to get child nodes: {e.Message} -> {parent.Name}");
+            Log.Warn($"Failed to get child nodes: {e.Message} -> {parent.Name}");
         }
 
 
