@@ -19,15 +19,26 @@ public partial class GameMessageBus : AutoGodotService
 
     private static readonly Queue<(string, WeakReference<IMessageConsumer>)> ClearChannelQueue = [];
 
+    private static readonly HashSet<string> NodeGroupSet = [];
+
 
     /// <summary>
     /// 推送一条消息,包含通道路由和消息体
     /// </summary>
-    /// <param name="channel"></param>
+    /// <param name="channel">也可能是group</param>
     /// <param name="message"></param>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     public static void Push(string channel, Variant message)
     {
+        if (NodeGroupSet.Contains(channel))
+        {
+            foreach (var node in Services.GetSceneTree()!.GetNodesInGroup(channel)
+                         .Where(node => node is IMessageConsumer).Cast<IMessageConsumer>())
+            {
+                node?.ReceiveMessage(message);
+            }
+        }
+
         if (WeakChannelMap.TryGetValue(channel, out var ids))
         {
             foreach (var reference in ids)
@@ -60,7 +71,6 @@ public partial class GameMessageBus : AutoGodotService
     /// <param name="obj"></param>
     public static void Register(object obj)
     {
-        
         if (obj is not IMessageConsumer consumer)
         {
             return;
@@ -80,6 +90,15 @@ public partial class GameMessageBus : AutoGodotService
             }
 
             value.Add(new WeakReference<IMessageConsumer>(consumer));
+        }
+
+
+        if (obj is Node node)
+        {
+            foreach (var group in node.GetGroups())
+            {
+                NodeGroupSet.Add(group.ToString());
+            }
         }
     }
 

@@ -14,7 +14,7 @@ namespace GodotServiceFramework.GTask;
 /// </summary>
 public class GameTaskLoop
 {
-    private readonly Timer? _myTimer;
+    private Timer? _myTimer;
 
     private static int Delay => 10;
 
@@ -52,7 +52,10 @@ public class GameTaskLoop
     public GameTaskLoop()
     {
         _currentContext.OnTag += OnTag;
+    }
 
+    public void Start()
+    {
         // 创建 Timer 节点
         _myTimer = new Timer();
 
@@ -62,7 +65,8 @@ public class GameTaskLoop
         _myTimer.Autostart = true; // 自动开始
         _myTimer.Timeout += OnTimeout;
         Services.Get<MyTimer>()!.CallDeferred(Node.MethodName.AddChild, _myTimer);
-        
+
+        OnTimeout();
     }
 
     private void OnTimeout()
@@ -72,6 +76,8 @@ public class GameTaskLoop
 
     /// <summary>
     /// 执行, 这里评估规则并执行对应的任务流. 外部执行这个方法的契机是管理器的定时器回调
+    ///
+    /// 如果一个任务流已经启动, 则直接返回
     /// </summary>
     public void ExecuteAll()
     {
@@ -96,6 +102,7 @@ public class GameTaskLoop
                 flow.Context = _currentContext;
 
                 flow.Start();
+                flow.Context.PutTag($"{flow.Name} started");
             }
         }, WorkflowsData.Keys.ToList());
     }

@@ -105,9 +105,14 @@ public class GameTaskContext : IMessageConsumer
 
     public void ReceiveMessage(Variant message)
     {
-        if (message.VariantType == Variant.Type.String)
+        switch (message.Obj)
         {
-            PutTag(-2, message.AsString());
+            case string str:
+                PutTag(-2, str);
+
+                break;
+            case TaskMessage taskMessage:
+                break;
         }
     }
 }
