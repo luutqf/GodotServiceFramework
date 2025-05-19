@@ -28,8 +28,8 @@ public static class DataNodeExtensions
         try
         {
             var binding = node._Parse(args);
-            Log.Info(binding);
-            node.InitBindData(binding);
+            Log.Info(binding!);
+            node.InitBindData(binding!);
         }
         catch (Exception e)
         {

@@ -38,13 +38,17 @@ public class DynamicLinqRuleEngine<T>
     }
 
     // 评估并执行动作
-    public void EvaluateAndExecute(T subject, Action<TaskRule> actionExecutor, List<TaskRule> rules)
+    public bool EvaluateAndExecute(T subject, Action<TaskRule> actionExecutor, List<TaskRule> rules)
     {
+        var triggered = false;
         var triggeredRules = Evaluate(subject, rules);
 
         foreach (var rule in triggeredRules)
         {
+            triggered = true;
             actionExecutor(rule);
         }
+
+        return triggered;
     }
 }

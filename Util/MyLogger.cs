@@ -246,7 +246,7 @@ public partial class MyLogger : AutoGodotService
         GD.PushError(v);
     }
 
-    public override void Init()
+    public MyLogger()
     {
         Instance = this;
     }

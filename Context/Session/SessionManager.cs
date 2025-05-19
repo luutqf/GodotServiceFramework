@@ -19,9 +19,6 @@ public partial class SessionManager : AutoGodotService
     };
 
 
-    public override void Init()
-    {
-    }
 
     public override void Destroy()
     {

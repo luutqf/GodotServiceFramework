@@ -16,7 +16,6 @@ public partial class ConsoleTitleButton : HBoxContainer
     public override void _Ready()
     {
         Visible = true;
-        Log.Info("成功加载了一个ConsoleTitleButton");
 
         _consoleTitleButton?.Connect(BaseButton.SignalName.Pressed, Callable.From(() =>
         {

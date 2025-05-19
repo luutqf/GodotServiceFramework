@@ -24,6 +24,17 @@ public class GameTaskContext : IMessageConsumer
         GameMessageBus.Register(this);
     }
 
+    #region 计数
+
+    public readonly Dictionary<string, int> FlowCounts = [];
+
+    public int FlowCount(string name)
+    {
+        return FlowCounts.GetValueOrDefault(name, 0);
+    }
+
+    #endregion
+
     #region session相关,待定
 
     /// <summary>

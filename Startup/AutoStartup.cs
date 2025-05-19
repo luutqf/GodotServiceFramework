@@ -17,9 +17,6 @@ namespace GodotServiceFramework.Startup;
 
 public static class AutoStartup
 {
-// #pragma warning disable CA2255
-//     [ModuleInitializer]
-// #pragma warning restore CA2255
     public static void Initialize()
     {
         try
@@ -138,7 +135,6 @@ public static class AutoStartup
 
         if (service is GodotObject godotObject)
             Services.Add(godotObject);
-        service.Init();
     }
 
 

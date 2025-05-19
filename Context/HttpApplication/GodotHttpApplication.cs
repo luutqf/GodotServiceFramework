@@ -9,10 +9,9 @@ namespace GodotServiceFramework.Context.HttpApplication;
 /// </summary>
 public partial class AutoGodotHttpApplication : AutoGodotService
 {
-    private IRestServer? _restServer;
+    private readonly IRestServer? _restServer;
 
-
-    public override void Init()
+    public AutoGodotHttpApplication()
     {
         Log.Info("初始化http server");
 

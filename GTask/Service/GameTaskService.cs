@@ -17,9 +17,7 @@ public partial class GameTaskService : AutoGodotService
         _db = SqliteTool.Db(globalizePath, out _, initTables: [typeof(GameTaskEntity)]);
     }
 
-    public override void Init()
-    {
-    }
+
 
     public override void Destroy()
     {

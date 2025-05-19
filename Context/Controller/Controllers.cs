@@ -400,7 +400,7 @@ public partial class Controllers : Service.AutoGodotService
         }
     }
 
-    public override void Init()
+    public Controllers()
     {
         Instance = this;
     }

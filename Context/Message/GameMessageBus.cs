@@ -103,10 +103,7 @@ public partial class GameMessageBus : AutoGodotService
     }
 
 
-    /// <summary>
-    /// node和task默认注册
-    /// </summary>
-    public override void Init()
+    public GameMessageBus()
     {
         if (Engine.GetMainLoop() is SceneTree sceneTree)
             sceneTree.NodeAdded += Register;

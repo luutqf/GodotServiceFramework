@@ -30,9 +30,10 @@ public partial class GameTaskFactory : AutoGodotService, ICloseable
 
     public override void _Ready()
     {
-        GD.Print("任务工厂已加载");
+        Log.Info("任务工厂已加载");
         var globalizePath = ProjectSettings.GlobalizePath("user://data/db.sqlite");
-        Db = SqliteTool.Db(globalizePath, out _, initTables: [typeof(GameTaskEntity), typeof(GameTaskFlowEntity)]);
+        Db = SqliteTool.Db(globalizePath, out _,
+            initTables: [typeof(GameTaskEntity), typeof(GameTaskFlowEntity), typeof(GameTaskLoopEntity)]);
     }
 
     public GameTaskFactory()
@@ -93,6 +94,11 @@ public partial class GameTaskFactory : AutoGodotService, ICloseable
         return gameTask;
     }
 
+    public GameTaskLoop LoadGameTaskLoop(string name)
+    {
+        return Db!.Table<GameTaskLoopEntity>().FirstOrDefault(entity => entity.Name == name).ToTaskLoop();
+    }
+
     public void Close()
     {
         _taskTypes.Clear();
@@ -105,9 +111,6 @@ public partial class GameTaskFactory : AutoGodotService, ICloseable
     }
 
 
-    public override void Init()
-    {
-    }
 
     public override void Destroy()
     {

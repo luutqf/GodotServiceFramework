@@ -15,13 +15,13 @@ namespace GodotServiceFramework.Config;
 [Order(-1000)]
 public partial class ConfigStore : AutoGodotService
 {
-    private YamlConfigManager? _manager;
+    private readonly YamlConfigManager _manager;
 
     private static ConfigStore? _instance;
 
     public event Action<string, object?> OnConfigUpdated = delegate { };
 
-    public override void Init()
+    public ConfigStore()
     {
         var path = ProjectSettings.GlobalizePath("user://config/default.yaml");
 

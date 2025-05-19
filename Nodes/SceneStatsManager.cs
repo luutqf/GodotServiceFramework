@@ -465,11 +465,7 @@ public partial class SceneStatsManager : AutoGodotService
         }
 
         lastTime = 0;
-        return default;
-    }
-
-    public override void Init()
-    {
+        return null;
     }
 
     public override void Destroy()

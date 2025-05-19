@@ -2,6 +2,8 @@ using Godot;
 using GodotServiceFramework.Context.Service;
 using GodotServiceFramework.GTask.Rule;
 using GodotServiceFramework.GTask.Service;
+using GodotServiceFramework.Util;
+using SigmusV2.GodotServiceFramework.Util;
 using Timer = Godot.Timer;
 
 
@@ -14,6 +16,12 @@ namespace GodotServiceFramework.GTask;
 /// </summary>
 public class GameTaskLoop
 {
+    public readonly string Name;
+
+    public int AutoStop;
+
+    public int EmptyCount;
+
     private Timer? _myTimer;
 
     private static int Delay => 10;
@@ -27,14 +35,15 @@ public class GameTaskLoop
 
     public void AddTask(TaskRule taskRule)
     {
-        WorkflowsData.Add(taskRule, Services.Get<TaskWorkflowService>()!.GetTaskWorkflow(taskRule.Action));
+        if (taskRule.Type == TaskRuleType.TaskFlow)
+        {
+            WorkflowsData.Add(taskRule, Services.Get<TaskWorkflowService>()!.GetTaskWorkflow(taskRule.Action));
+        }
     }
 
     //定时任务和任务流的名字绑定, 定时触发后, 仍需要验证rule. 以及当前任务的状态
     private List<(string flowName, string cron)> _crons = [];
 
-    //用这个序列化上面的组合
-    public string WorkflowsJson { get; set; } = "[]";
 
     //这里可以独立设置session
     public void SetSessionId(ulong sessionId)
@@ -49,8 +58,9 @@ public class GameTaskLoop
     }
 
     //构造函数
-    public GameTaskLoop()
+    public GameTaskLoop(string name)
     {
+        Name = name;
         _currentContext.OnTag += OnTag;
     }
 
@@ -69,6 +79,15 @@ public class GameTaskLoop
         OnTimeout();
     }
 
+    public void Stop()
+    {
+        if (_myTimer != null)
+        {
+            // Services.Get<MyTimer>()!.CallDeferred(Node.MethodName.RemoveChild, _myTimer);
+            Log.Info($"{Name} 已终止");
+        }
+    }
+
     private void OnTimeout()
     {
         ExecuteAll();
@@ -83,28 +102,40 @@ public class GameTaskLoop
     {
         var ruleEngine = Services.Get<DynamicRuleEngineManager>()!.Instance;
 
-        ruleEngine.EvaluateAndExecute(_currentContext, rule =>
-        {
-            lock (rule)
+        if (!ruleEngine.EvaluateAndExecute(_currentContext, rule =>
             {
-                if (rule.FastError && _currentContext.ErrorCounts.TryGetValue(rule.Action, out var errorCount) &&
-                    errorCount > 2)
-                    return;
-
-
-                var flow = WorkflowsData[rule];
-                if (flow.IsStarted)
+                lock (rule)
                 {
-                    return;
+                    if (rule.FastError && _currentContext.ErrorCounts.TryGetValue(rule.Action, out var errorCount) &&
+                        errorCount > 2)
+                        return;
+
+
+                    if (WorkflowsData.TryGetValue(rule, out var flow))
+                    {
+                        if (flow.IsStarted)
+                        {
+                            return;
+                        }
+
+                        flow.Reset();
+                        flow.Context = _currentContext;
+
+                        flow.Start();
+                        _currentContext.PutTag($"{flow.Name} started");
+
+                        _currentContext.FlowCounts.Increment(rule.Action);
+                    }
                 }
+            }, WorkflowsData.Keys.ToList()))
+        {
+            EmptyCount++;
+        }
 
-                flow.Reset();
-                flow.Context = _currentContext;
-
-                flow.Start();
-                flow.Context.PutTag($"{flow.Name} started");
-            }
-        }, WorkflowsData.Keys.ToList());
+        if (AutoStop > 0 && EmptyCount >= AutoStop)
+        {
+            Stop();
+        }
     }
 
     /// <summary>

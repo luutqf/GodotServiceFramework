@@ -4,12 +4,7 @@ namespace GodotServiceFramework.GTask.Rule;
 
 public partial class DynamicRuleEngineManager : AutoGodotService
 {
-    public DynamicLinqRuleEngine<GameTaskContext> Instance = null!;
-
-    public override void Init()
-    {
-        Instance = new DynamicLinqRuleEngine<GameTaskContext>();
-    }
+    public readonly DynamicLinqRuleEngine<GameTaskContext> Instance = new();
 
     public override void Destroy()
     {

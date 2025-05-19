@@ -27,9 +27,7 @@ public partial class TaskWorkflowService : AutoGodotService
             ]);
     }
 
-    public override void Init()
-    {
-    }
+
 
     public override void Destroy()
     {
@@ -67,6 +65,7 @@ public partial class TaskWorkflowService : AutoGodotService
     public GameTaskFlowEntity GetTaskWorkflowEntityByName(string name)
     {
         var flowEntity = _db!.Table<GameTaskFlowEntity>().FirstOrDefault(entity => entity.Name == name);
+        if (flowEntity == null) throw new Exception($"<UNK>{name}<UNK>");
         InitTaskFlowEntities(flowEntity);
 
         return flowEntity;
