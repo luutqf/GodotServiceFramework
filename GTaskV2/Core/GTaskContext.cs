@@ -1,15 +1,17 @@
+using Godot;
+
 namespace GodotServiceFramework.GTaskV2;
 
 /// <summary>
 /// 任务上下文, 用于沟通整个任务链
 /// </summary>
-public class GTaskContext
+public partial class GTaskContext : RefCounted
 {
     public TaskType TaskType { get; set; }
 
     public TaskStatus TaskStatus { get; set; } = TaskStatus.Default;
 
-    public readonly HashSet<BaseGTask> CurrentTasks = [];
+    public readonly HashSet<BaseGTask> RunningTasks = new HashSet<BaseGTask>();
 
     public readonly Dictionary<string, object> CommonParameters = [];
 
@@ -17,7 +19,7 @@ public class GTaskContext
 
     public readonly Dictionary<string, int> FlowCounts = [];
 
-    public readonly HashSet<GTaskFlow> Flows = [];
+    // public readonly HashSet<GTaskFlow> Flows = [];
 
 
     /// <summary>

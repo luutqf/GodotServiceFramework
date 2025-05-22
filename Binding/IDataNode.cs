@@ -151,15 +151,6 @@ public interface IDataNode
 
         Dict[node.GetInstanceId()] = (binding.GetType(), binding.Id);
 
-
-        //TODO 这里单向绑定吧还是
-        var fieldInfos = GetType().GetRuntimeFields()
-            .Where(info => info.GetCustomAttributes().Any(attr => attr is BindingAttribute))
-            .Select(info => (info, info.GetCustomAttribute<BindingAttribute>()!.Name))
-            .ToArray();
-        FieldInfosMap[node.GetInstanceId()] = fieldInfos;
-
-
         DataStore.Set(binding);
 
         OnInitData(binding);

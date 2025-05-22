@@ -1,3 +1,4 @@
+using GodotServiceFramework.GTaskV2.Base;
 using GodotServiceFramework.GTaskV2.Model;
 using GodotServiceFramework.Util;
 

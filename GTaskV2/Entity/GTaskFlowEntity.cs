@@ -16,7 +16,16 @@ public partial class GTaskFlowEntity : RefCounted, IBinding
     [Unique(Name = "name")] public string Name { get; set; } = string.Empty;
 
     public long FirstNodeId { get; set; }
+    
+    /// 标记最后一个节点,不一定是真的最后一个, 但为了链接其他任务,设置它
+    public long LastNodeId { get; set; }
 
+    [Ignore]
+    public Dictionary<string, object> Parameters =>
+        JsonConvert.DeserializeObject<Dictionary<string, object>>(ParamsJson)!;
+
+
+    public string ParamsJson { get; set; } = "{}";
     public string Content { get; set; } = "[]";
 
     public GTaskModel[] Models

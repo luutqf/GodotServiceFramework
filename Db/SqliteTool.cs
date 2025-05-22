@@ -26,8 +26,6 @@ public static class SqliteTool
     public static SQLiteConnection Db(string path, out bool isNew, bool reset = false,
         Type[]? initTables = null)
     {
-        // var baseSqlitePath = MockHttpServerConfiguration.BaseSqlitePath;
-        // SQLiteConnection result;
         if (!reset && SqLiteConnections.TryGetValue(path, out var value))
         {
             isNew = false;
@@ -50,9 +48,6 @@ public static class SqliteTool
 
             Log.Info($"databasePath: {path}");
             var sqLiteConnection = new SQLiteConnection(path);
-
-            // sqLiteConnection.CreateCommand("PRAGMA journal_mode=WAL;").ExecuteNonQuery();
-            // sqLiteConnection.CreateCommand("PRAGMA busy_timeout=5000;").ExecuteNonQuery();
             
             value = sqLiteConnection;
             SqLiteConnections[path] = value;
@@ -81,10 +76,6 @@ public static class SqliteTool
     {
         if (SqLiteConnections.TryGetValue(path, out var value))
         {
-            // foreach (var (key, db) in DbLookup)
-            // {
-            //     if(db == value) 
-            // }
             value.Close();
             SqLiteConnections.Remove(path);
         }
@@ -166,7 +157,6 @@ public static class SqliteTool
         if (insert <= 0) return false;
 
         DataStore.Set(obj);
-        // IDataBinding.Binding(obj, DataModifyType.Insert);
         IDataNode.Binding(obj, DataModifyType.Insert);
 
         return true;
@@ -179,9 +169,7 @@ public static class SqliteTool
         if (delete <= 0) return false;
 
         DataStore.Remove(obj);
-
-        // IDataBinding.Binding(obj, DataModifyType.Delete);
-
+        
         IDataNode.Binding(obj, DataModifyType.Delete);
 
         return true;

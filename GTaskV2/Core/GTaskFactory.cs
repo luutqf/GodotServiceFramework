@@ -35,6 +35,11 @@ public partial class GTaskFactory : AutoGodotService
         }
     }
 
+    // public BaseGTask CreateTask(string taskName, GTaskContext context)
+    // {
+    //     
+    // }
+    
     public BaseGTask CreateTask(GTaskModel model, GTaskContext context)
     {
         if (!_taskTypes.TryGetValue(model.Name, out var type))

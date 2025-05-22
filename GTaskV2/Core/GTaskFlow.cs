@@ -13,9 +13,10 @@ public class GTaskFlow(GTaskContext? context)
 {
     public string Name { get; private set; } = SnowflakeIdGenerator.NextUId().ToString();
 
-    private readonly GTaskContext _context = context ?? new GTaskContext();
+    public readonly GTaskContext Context = context ?? new GTaskContext();
 
     public BaseGTask? FirstTask { get; set; }
+    public BaseGTask? LastTask { get; set; }
 
     /// <summary>
     /// 我们仍以flow作为入口
@@ -42,5 +43,8 @@ public class GTaskFlow(GTaskContext? context)
         Name = entity.Name;
         var gTasks = entity.Models.ToGTask(context);
         FirstTask = gTasks.First(task => task.Id == entity.FirstNodeId);
+        //TODO 如果未设置, 可以自行检索哪个是最后一个
+        LastTask = gTasks.First(task => task.Id == entity.LastNodeId);
+        FirstTask.Context.CommonParameters.AddRange(entity.Parameters);
     }
 }

@@ -311,7 +311,7 @@ public partial class Controllers : Service.AutoGodotService
     }
 
     private static bool GetMappingDelegates(string controller,
-        out System.Collections.Generic.Dictionary<(string m, string r), (Delegate d, UriTemplate u)>? delegates)
+        out Dictionary<(string m, string r), (Delegate d, UriTemplate u)>? delegates)
     {
         var manager = Instance!;
         if (manager._mappings.TryGetValue(controller, out delegates)) return true;
