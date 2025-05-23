@@ -6,7 +6,5 @@ public partial class DynamicRuleEngineManager : AutoGodotService
 {
     public readonly DynamicLinqRuleEngine<GameTaskContext> Instance = new();
 
-    public override void Destroy()
-    {
-    }
+
 }

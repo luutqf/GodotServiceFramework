@@ -7,10 +7,6 @@ namespace GodotServiceFramework.GTaskV2.Tasks;
 
 public class DefaultTimerGTask(GTaskModel model, GTaskContext context) : BaseTimerGTask(model, context)
 {
-    // protected override int Delay => 1;
-    //
-    // protected override bool AutoFail => false;
-
     public override void BeforeStart()
     {
         if (this.Get("background") is bool background)
@@ -27,11 +23,12 @@ public class DefaultTimerGTask(GTaskModel model, GTaskContext context) : BaseTim
 
     protected override void OnTimeout()
     {
-        Log.Info(this.Get("content"));
+        this.InsertAndRun(nameof(MessageGTask),
+            new Dictionary<string, object> { ["content"] = this.Get("content") + "123" });
     }
 
     protected override void AfterTask()
     {
-        this.InsertAfter("MessageGTask", new Dictionary<string, object> { ["content"] = "!!!!!!!!!!!!!!!!!!" });
+        this.InsertAfter(nameof(MessageGTask), new Dictionary<string, object> { ["content"] = "!!!!!!!!!!!!!!!!!!" });
     }
 }

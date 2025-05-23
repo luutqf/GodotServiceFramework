@@ -29,9 +29,7 @@ public partial class TaskWorkflowService : AutoGodotService
 
 
 
-    public override void Destroy()
-    {
-    }
+
 
 
     /// <summary>

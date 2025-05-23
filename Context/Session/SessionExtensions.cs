@@ -1,13 +1,14 @@
 using System.Diagnostics;
 using Godot;
 using GodotServiceFramework.Context.Controller;
-using GodotServiceFramework.Context.Thread;
 using GodotServiceFramework.GTask;
 using GodotServiceFramework.GTask.Entity;
-using GodotServiceFramework.Util;
 
 namespace GodotServiceFramework.Context.Session;
 
+/// <summary>
+/// 会话管理器
+/// </summary>
 public static class SessionExtensions
 {
     public static Node? GetSessionNode(this Node node)
@@ -102,7 +103,6 @@ public static class SessionExtensions
     public static void InvokeController(this Node @this, string controller, string resource,
         string method = "GET", params object?[]? args)
     {
-
         if (Activity.Current != null)
         {
             Activity.Current.Dispose();

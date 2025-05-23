@@ -7,6 +7,24 @@ namespace GodotServiceFramework.GTaskV2.Util;
 public static class GTaskExtensions
 {
     /// <summary>
+    /// 插入一个新任务, 并立即执行, 
+    /// </summary>
+    /// <param name="this"></param>
+    /// <param name="name"></param>
+    /// <param name="paramsDict"></param>
+    public static void InsertAndRun(this BaseGTask @this, string name, Dictionary<string, object> paramsDict)
+    {
+        var factory = Services.Get<GTaskFactory>()!;
+        var model = new GTaskModel
+        {
+            Name = name,
+            NextIds = [],
+            Parameters = paramsDict,
+        };
+        _ = factory.CreateTask(model, @this.Context).Start();
+    }
+
+    /// <summary>
     /// 添加一个工作流, 该工作流会在当前任务完成后执行,工作流的最后一个任务会继承当前任务的后续任务
     /// </summary>
     /// <param name="this"></param>

@@ -23,6 +23,11 @@ public static class Services
         Add(obj.GetType().Name, obj);
     }
 
+    /// <summary>
+    /// 添加service, 标好名字
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="obj"></param>
     public static void Add(string name, GodotObject obj)
     {
         if (Engine.HasSingleton(name))
@@ -46,9 +51,7 @@ public static class Services
                         await Task.Delay(1000);
                         continue;
                     }
-
-                    // await NextProcessFrame(); 
-
+                    
                     GetSceneTree()?.Root.CallDeferred(Node.MethodName.AddChild, node);
                     break;
                 }
@@ -56,6 +59,13 @@ public static class Services
         });
     }
 
+    
+    /// <summary>
+    /// 尝试通过泛型获取service
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
     public static bool TryGet<T>(out T? obj) where T : GodotObject
     {
         try
@@ -77,6 +87,12 @@ public static class Services
         return Get<T>(typeof(T).Name) ?? null;
     }
 
+    /// <summary>
+    /// 通过名称获取服务
+    /// </summary>
+    /// <param name="name"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
     public static T? Get<T>(string name) where T : GodotObject
     {
         if (!Engine.HasSingleton(name)) return null;
@@ -84,21 +100,25 @@ public static class Services
         return Engine.GetSingleton(name) as T;
     }
 
+    /// <summary>
+    /// 通过类型获取服务
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
     public static GodotObject? Get(Type type)
     {
         return Get<GodotObject>(type.Name);
     }
 
+    /// <summary>
+    /// 根据名称删掉服务
+    /// </summary>
+    /// <param name="name"></param>
     public static void Remove(string name)
     {
         if (!Has(name)) return;
 
         var obj = Get<GodotObject>(name);
-
-        if (obj is IService service)
-        {
-            service.Destroy();
-        }
 
         Engine.UnregisterSingleton(name);
 
@@ -110,16 +130,27 @@ public static class Services
         RegisterNames.Remove(name);
     }
 
+    /// <summary>
+    /// 根据类型删掉服务
+    /// </summary>
+    /// <param name="type"></param>
     public static void Remove(Type type)
     {
         Remove(type.Name);
     }
 
+    /// <summary>
+    /// 根据实例删掉服务
+    /// </summary>
+    /// <param name="instance"></param>
     public static void Remove(object? instance)
     {
         if (instance != null) Remove(instance.GetType().Name);
     }
 
+    /// <summary>
+    /// 把缓存里的,用过的都删除掉,根据名字
+    /// </summary>
     public static void Destroy()
     {
         foreach (var name in RegisterNames.ToArray().Where(Has))
@@ -129,17 +160,29 @@ public static class Services
     }
 
 
+    /// <summary>
+    /// 获取场景树
+    /// </summary>
+    /// <returns></returns>
     public static SceneTree? GetSceneTree()
     {
         return Engine.GetMainLoop() as SceneTree;
     }
 
+    /// <summary>
+    /// 获取root节点
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
     public static T GetRoot<T>() where T : Node
     {
         var rootNode = GetSceneTree()?.Root;
         return rootNode!.GetNode<T>($"/root/{typeof(T).Name}");
     }
 
+    /// <summary>
+    /// 等待下一帧
+    /// </summary>
     public static async Task NextProcessFrame()
     {
         var sceneTree = GetSceneTree();

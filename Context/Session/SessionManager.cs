@@ -19,8 +19,7 @@ public partial class SessionManager : AutoGodotService
     };
 
 
-
-    public override void Destroy()
+    public override void _ExitTree()
     {
         SessionIdMap.Clear();
     }

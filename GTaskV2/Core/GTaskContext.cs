@@ -1,4 +1,5 @@
 using Godot;
+using GodotServiceFramework.GTaskV2.Model;
 
 namespace GodotServiceFramework.GTaskV2;
 
@@ -11,15 +12,15 @@ public partial class GTaskContext : RefCounted
 
     public TaskStatus TaskStatus { get; set; } = TaskStatus.Default;
 
-    public readonly HashSet<BaseGTask> RunningTasks = new HashSet<BaseGTask>();
+    public readonly HashSet<BaseGTask> RunningTasks = [];
+
+    public readonly List<GTaskModel> TasksHistory = [];
 
     public readonly Dictionary<string, object> CommonParameters = [];
 
     public readonly Dictionary<string, int> ErrorCounts = [];
 
     public readonly Dictionary<string, int> FlowCounts = [];
-
-    // public readonly HashSet<GTaskFlow> Flows = [];
 
 
     /// <summary>

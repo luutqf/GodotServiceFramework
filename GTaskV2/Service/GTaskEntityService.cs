@@ -7,8 +7,6 @@ namespace GodotServiceFramework.GTaskV2.Service;
 /// </summary>
 public partial class GTaskEntityService : AutoGodotService
 {
-    public override void Destroy()
-    {
-    }
+
     
 }

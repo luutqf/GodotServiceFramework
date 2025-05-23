@@ -251,9 +251,7 @@ public partial class MyLogger : AutoGodotService
         Instance = this;
     }
 
-    public override void Destroy()
-    {
-    }
+
 }
 
 public class LogInfo

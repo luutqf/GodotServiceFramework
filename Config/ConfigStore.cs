@@ -108,7 +108,5 @@ public partial class ConfigStore : AutoGodotService
     }
 
 
-    public override void Destroy()
-    {
-    }
+
 }

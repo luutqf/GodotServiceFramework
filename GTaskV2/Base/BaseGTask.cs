@@ -181,6 +181,8 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
 
         BeforeStart();
 
+        Context.TasksHistory.Add(Model);
+        
         try
         {
             switch (Progress)
