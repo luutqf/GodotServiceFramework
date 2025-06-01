@@ -23,7 +23,7 @@ public class GTaskFlow(GTaskContext? context)
     /// </summary>
     public void Start()
     {
-        FirstTask?.Start();
+        Task.Run(() => FirstTask?.Start());
     }
 
     public void Stop()
@@ -44,7 +44,9 @@ public class GTaskFlow(GTaskContext? context)
         var gTasks = entity.Models.ToGTask(context);
         FirstTask = gTasks.First(task => task.Id == entity.FirstNodeId);
         //TODO 如果未设置, 可以自行检索哪个是最后一个
-        LastTask = gTasks.First(task => task.Id == entity.LastNodeId);
+        if (entity.LastNodeId != 0)
+            LastTask = gTasks.First(task => task.Id == entity.LastNodeId);
+        // FirstTask.Context.LastTaskId = entity.LastNodeId;
         FirstTask.Context.CommonParameters.AddRange(entity.Parameters);
     }
 }

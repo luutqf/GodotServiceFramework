@@ -1,5 +1,6 @@
 using Godot;
 using GodotServiceFramework.GTaskV2.Model;
+using GodotServiceFramework.Util;
 
 namespace GodotServiceFramework.GTaskV2;
 
@@ -21,6 +22,8 @@ public partial class GTaskContext : RefCounted
     public readonly Dictionary<string, int> ErrorCounts = [];
 
     public readonly Dictionary<string, int> FlowCounts = [];
+
+    // public long LastTaskId { get; set; } = -1;
 
 
     /// <summary>
@@ -73,6 +76,47 @@ public partial class GTaskContext : RefCounted
     #endregion
 
     public static readonly GTaskContext Empty = new();
+
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+
+        foreach (var value in CommonParameters.Values)
+        {
+            switch (value)
+            {
+                case IDisposable disposableValue:
+                    disposableValue.Dispose();
+                    break;
+                case ICloseable closeable:
+                    closeable.Close();
+                    break;
+            }
+        }
+    }
+    // protected override void Dispose(bool disposing)
+    // {
+    //     try
+    //     {
+    //         foreach (var value in CommonParameters.Values)
+    //         {
+    //             switch (value)
+    //             {
+    //                 case IDisposable disposableValue:
+    //                     disposableValue.Dispose();
+    //                     break;
+    //                 case ICloseable closeable:
+    //                     closeable.Close();
+    //                     break;
+    //             }
+    //         }
+    //     }
+    //     finally
+    //     {
+    //         base.Dispose();
+    //     }
+    // }
 }
 
 public enum TaskStatus

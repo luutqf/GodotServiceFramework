@@ -21,10 +21,11 @@ public class DefaultTimerGTask(GTaskModel model, GTaskContext context) : BaseTim
         base.BeforeStart();
     }
 
-    protected override void OnTimeout()
+    protected override Task OnTimeout()
     {
         this.InsertAndRun(nameof(MessageGTask),
             new Dictionary<string, object> { ["content"] = this.Get("content") + "123" });
+        return Task.CompletedTask;
     }
 
     protected override void AfterTask()

@@ -8,7 +8,7 @@ namespace GodotServiceFramework.GTaskV2.Tasks;
 
 public class SceneGTask(GTaskModel model, GTaskContext context) : BaseGTask(model, context)
 {
-    protected override Task Run()
+    protected override async Task<int> Run()
     {
         var scene = this.Get("flowScene").ToString()!;
 
@@ -17,6 +17,6 @@ public class SceneGTask(GTaskModel model, GTaskContext context) : BaseGTask(mode
             Scene = scene,
             Args = Context
         });
-        return Task.CompletedTask;
+        return 100;
     }
 }

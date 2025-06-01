@@ -6,7 +6,7 @@ namespace GodotServiceFramework.GTaskV2.Tasks;
 
 public class DelayGTask(GTaskModel model, GTaskContext context) : BaseGTask(model, context)
 {
-    protected override async Task Run()
+    protected override async Task<int> Run()
     {
         if (Parameters.TryGetValue("delay", out var value))
         {
@@ -19,6 +19,6 @@ public class DelayGTask(GTaskModel model, GTaskContext context) : BaseGTask(mode
         }
 
         Log.Info("Delay task finished");
-        Complete();
+        return 100;
     }
 }

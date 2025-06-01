@@ -5,6 +5,7 @@ using SigmusV2.GodotServiceFramework.Context;
 [Channel(["task"])]
 public class GameTaskContext : IMessageConsumer
 {
+    public List<string> TaskResults = [];
     public string Name { get; set; } = string.Empty;
 
 

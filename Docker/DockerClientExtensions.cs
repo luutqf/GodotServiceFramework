@@ -692,11 +692,17 @@ public static class DockerClientExtensions
                 All = true, // 包括停止的容器
             });
 
-        var container = containers.FirstOrDefault(c =>
-            c.Names.Any(n => n.Equals(containerName, StringComparison.OrdinalIgnoreCase)))!;
+        try
+        {
+            var container = containers.First(c =>
+                c.Names.Any(n => n.Equals(containerName, StringComparison.OrdinalIgnoreCase)));
 
-        return (container.ID, container.State, container.Image)
-            ;
+            return (container.ID, container.State, container.Image);
+        }
+        catch (Exception)
+        {
+            return (string.Empty, string.Empty, string.Empty);
+        }
     }
 
     // 删除容器

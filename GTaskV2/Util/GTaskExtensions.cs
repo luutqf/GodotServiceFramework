@@ -12,7 +12,7 @@ public static class GTaskExtensions
     /// <param name="this"></param>
     /// <param name="name"></param>
     /// <param name="paramsDict"></param>
-    public static void InsertAndRun(this BaseGTask @this, string name, Dictionary<string, object> paramsDict)
+    public static BaseGTask InsertAndRun(this BaseGTask @this, string name, Dictionary<string, object> paramsDict)
     {
         var factory = Services.Get<GTaskFactory>()!;
         var model = new GTaskModel
@@ -21,7 +21,16 @@ public static class GTaskExtensions
             NextIds = [],
             Parameters = paramsDict,
         };
-        _ = factory.CreateTask(model, @this.Context).Start();
+        var baseGTask = factory.CreateTask(model, @this.Context);
+        _ = baseGTask.Start();
+        return baseGTask;
+    }
+
+    public static void InsertAndRunFlow(this BaseGTask @this, GTaskFlowEntity entity)
+    {
+        var taskFlow = new GTaskFlow(context: @this.Context);
+        taskFlow.Initialize(entity);
+        taskFlow.Start();
     }
 
     /// <summary>
@@ -36,7 +45,12 @@ public static class GTaskExtensions
         taskFlow.Initialize(entity);
         if (replace)
         {
-            taskFlow.LastTask!.NextTasks.AddRange(@this.NextTasks);
+            if (taskFlow.LastTask != null)
+            {
+                // taskFlow.LastTask.Model.NextIds = @this.Model.NextIds;
+                taskFlow.LastTask.Model.NextModels = @this.Model.NextModels;
+            }
+
             @this.NextTasks.Clear();
         }
 
@@ -72,21 +86,70 @@ public static class GTaskExtensions
         @this.NextTasks.Add(task);
     }
 
-    /// <summary>
-    /// 获取任务参数,如果任务内部没有, 则从上下文中获取
-    /// </summary>
-    /// <param name="this"></param>
-    /// <param name="name"></param>
-    /// <returns></returns>
-    public static object Get(this BaseGTask @this, string name)
+    private static object GetByCommon(BaseGTask @this, string name)
     {
-        if (@this.Parameters.TryGetValue(name, out var value) ||
-            @this.Context.CommonParameters.TryGetValue(name, out value))
+        if (@this.Context.CommonParameters.TryGetValue(name, out var value))
         {
             return value;
         }
 
         return string.Empty;
+    }
+
+    public static bool TryGet(this BaseGTask @this, string name, out object? value)
+    {
+        try
+        {
+            value = @this.Get(name);
+            return true;
+        }
+        catch (Exception)
+        {
+            value = null;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 获取任务参数,如果任务内部没有, 则从上下文中获取
+    /// </summary>
+    /// <param name="this"></param>
+    /// <param name="name"></param>
+    /// <param name="defaultValue"></param>
+    /// <returns></returns>
+    public static object Get(this BaseGTask @this, string name, object? defaultValue = null)
+    {
+        if (@this.Parameters.TryGetValue(name, out var value))
+        {
+            switch (value)
+            {
+                case string s when s == name:
+                {
+                    return GetByCommon(@this, name);
+                }
+                case string s when s.StartsWith("common:"):
+                {
+                    if (@this.Context.CommonParameters.TryGetValue(s[7..], out var commonValue))
+                    {
+                        return commonValue;
+                    }
+
+                    throw new Exception($"Unknown common parameter: {s[7..]}");
+                }
+                default:
+                    return value;
+            }
+        }
+
+        if (@this.Context.CommonParameters.TryGetValue(name, out value))
+        {
+            return value;
+        }
+
+        if (defaultValue == null)
+            throw new Exception($"Unknown common parameter: {name}");
+
+        return defaultValue;
     }
 
     /// <summary>

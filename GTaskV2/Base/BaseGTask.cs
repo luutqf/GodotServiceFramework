@@ -1,6 +1,7 @@
 using GodotServiceFramework.GTaskV2.Model;
 using GodotServiceFramework.GTaskV2.Util;
 using GodotServiceFramework.Util;
+using SigmusV2.Script.task_v2;
 
 namespace GodotServiceFramework.GTaskV2;
 
@@ -19,6 +20,9 @@ namespace GodotServiceFramework.GTaskV2;
 public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
 {
     public virtual string Name => GetType().Name;
+
+    // 失败重试
+    protected virtual bool Retry { get; set; } = false;
 
     private int _progress;
 
@@ -83,7 +87,7 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
                 break;
             }
 
-            case > TaskComplete:
+            case > TaskComplete and < CompleteLine:
             {
                 Destroy();
                 break;
@@ -91,7 +95,8 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
 
             case TaskError:
             {
-                Log.Error($"{Name} error");
+                Log.Warn($"❌ {this.GetTitle()} error");
+                OnError();
                 Destroy();
                 break;
             }
@@ -126,10 +131,9 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
             }
         else
         {
-            if (Context.RunningTasks.Count != 0)
-            {
-                Log.Info($"{Name}任务已执行完毕, 还有{Context.RunningTasks.Count}个任务未完成");
-            }
+            Log.Info(Context.RunningTasks.Count != 0
+                ? $"{Name}任务已启动完毕, 还有{Context.RunningTasks.Count}个任务未完成"
+                : $"{Name}任务已启动完毕,无更多任务");
         }
     }
 
@@ -146,6 +150,10 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
 
 
     public virtual void BeforeStart()
+    {
+    }
+
+    public virtual void OnError()
     {
     }
 
@@ -182,7 +190,7 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
         BeforeStart();
 
         Context.TasksHistory.Add(Model);
-        
+
         try
         {
             switch (Progress)
@@ -190,12 +198,14 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
                 case TaskDefault:
                 {
                     Progress = TaskStart;
-                    await Run();
+                    var run = await Run();
+                    Progress = run;
                     return true;
                 }
                 case TaskBackground:
                 {
-                    await Run();
+                    var run = await Run();
+                    Progress = run;
                     return true;
                 }
                 case > TaskDefault and < TaskComplete:
@@ -228,7 +238,7 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
         }
     }
 
-    protected abstract Task Run();
+    protected abstract Task<int> Run();
 
     public bool Stop()
     {
@@ -267,7 +277,26 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
 
     private void Destroy()
     {
+        foreach (var value in Parameters.Values)
+        {
+            switch (value)
+            {
+                case IDisposable disposableValue:
+                    disposableValue.Dispose();
+                    break;
+                case ICloseable closeable:
+                    closeable.Close();
+                    break;
+            }
+        }
+
         Context.RunningTasks.Remove(this);
+
+        // if (Id == Context.LastTaskId)
+        // {
+        //     Log.Info("任务上下文终结, 释放资源?");
+        //     Context.Dispose();
+        // }
     }
 
 
@@ -292,5 +321,7 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
     //跳过所有
     public const int SkipAllTask = -100;
 
-    public const int TaskBackground = -4;
+    public const int CompleteLine = 300;
+
+    public const int TaskBackground = 302;
 }

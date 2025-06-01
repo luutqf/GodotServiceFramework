@@ -20,8 +20,8 @@ public class HttpClientGTask(GTaskModel model, GTaskContext context) : BaseTimer
     //     return Task.CompletedTask;
     // }
 
-    protected override void OnTimeout()
+    protected override Task OnTimeout()
     {
-        
+        return Task.CompletedTask;
     }
 }
