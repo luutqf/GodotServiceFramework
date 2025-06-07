@@ -19,6 +19,6 @@ public class ExtraRunFlowGTask(GTaskModel model, GTaskContext context) : BaseGTa
         Log.Info("开始执行额外工作流: " + name);
         var flowEntity = Services.Get<GTaskEntityService>()!.GetFlowEntity(name);
         this.InsertAndRunFlow(flowEntity);
-        return Task.FromResult(100);
+        return Task.FromResult(50);
     }
 }

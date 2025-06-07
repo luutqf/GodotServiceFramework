@@ -21,6 +21,10 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
 {
     public virtual string Name => GetType().Name;
 
+    public event Action OnComplete = delegate { };
+
+    public string? FlowName { get; set; }
+
     // 失败重试
     protected virtual bool Retry { get; set; } = false;
 
@@ -83,7 +87,7 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
 
                 Destroy();
                 StartNext();
-
+                OnComplete.Invoke();
                 break;
             }
 
@@ -123,18 +127,12 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
 
     private void StartNext()
     {
-        var nextTasks = this.GetNextTasks(Context);
+        var nextTasks = this.GetNextTasks();
         if (nextTasks.Count != 0)
             foreach (var nextTask in nextTasks)
             {
                 _ = nextTask.Start();
             }
-        else
-        {
-            Log.Info(Context.RunningTasks.Count != 0
-                ? $"{Name}任务已启动完毕, 还有{Context.RunningTasks.Count}个任务未完成"
-                : $"{Name}任务已启动完毕,无更多任务");
-        }
     }
 
     public Dictionary<string, object> Parameters { get; set; } = [];
@@ -218,7 +216,7 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
                     Log.Warn("任务处于错误状态");
                     return false;
                 }
-                case >= TaskComplete or TaskSelfSkip or TaskTagSkip:
+                case TaskComplete or TaskSelfSkip or TaskTagSkip:
                 {
                     StartNext();
                     return true;
@@ -313,15 +311,16 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
     public const int TaskComplete = 100;
 
     //自行跳过
-    public const int TaskSelfSkip = -5;
+    public const int TaskSelfSkip = 500;
 
     //标签跳过
-    public const int TaskTagSkip = -3;
+    public const int TaskTagSkip = 300;
 
     //跳过所有
-    public const int SkipAllTask = -100;
+    public const int SkipAllTask = 1000;
 
     public const int CompleteLine = 300;
 
-    public const int TaskBackground = 302;
+    public const int TaskBackground = 301;
+    // public const int Task = 301;
 }

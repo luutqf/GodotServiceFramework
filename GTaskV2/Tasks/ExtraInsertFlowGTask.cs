@@ -15,7 +15,7 @@ public class ExtraInsertFlowGTask(GTaskModel model, GTaskContext context) : Base
 {
     protected override Task<int> Run()
     {
-        this.GetNextTasks(Context);
+        this.GetNextTasks();
         var name = this.Get("name").ToString()!;
         Log.Info("向后插入额外工作流: " + name);
 

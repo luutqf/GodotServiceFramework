@@ -30,6 +30,18 @@ public static class GTaskExtensions
     {
         var taskFlow = new GTaskFlow(context: @this.Context);
         taskFlow.Initialize(entity);
+        // if (taskFlow.GTaskGraveyard != null)
+        // {
+        //     taskFlow.GTaskGraveyard.Model.NextModels = @this.Model.NextModels;
+        //     taskFlow.GTaskGraveyard.Model.NextIds = @this.Model.NextIds;
+        //     taskFlow.GTaskGraveyard.NextTasks.AddRange(@this.NextTasks);
+        //     @this.Model.NextIds = [];
+        //     @this.Model.NextModels = [];
+        //     @this.NextTasks.Clear();
+        // }
+
+        if (taskFlow.GTaskGraveyard != null)
+            taskFlow.GTaskGraveyard.OnComplete += () => { @this.Progress = 100; };
         taskFlow.Start();
     }
 
@@ -45,16 +57,15 @@ public static class GTaskExtensions
         taskFlow.Initialize(entity);
         if (replace)
         {
-            if (taskFlow.LastTask != null)
+            if (taskFlow.GTaskGraveyard != null)
             {
-                // taskFlow.LastTask.Model.NextIds = @this.Model.NextIds;
-                taskFlow.LastTask.Model.NextModels = @this.Model.NextModels;
+                taskFlow.GTaskGraveyard.Model.NextModels = @this.Model.NextModels;
             }
 
             @this.NextTasks.Clear();
         }
 
-        @this.NextTasks.Add(taskFlow.FirstTask!);
+        @this.NextTasks.AddRange(taskFlow.Context.GetStartTasks(taskFlow.Name));
     }
 
     /// <summary>
@@ -157,19 +168,37 @@ public static class GTaskExtensions
     /// </summary>
     /// <param name="this"></param>
     /// <param name="context"></param>
+    /// <param name="entityFirstNodeId"></param>
     /// <returns></returns>
-    public static BaseGTask[] ToGTask(this GTaskModel[] @this, GTaskContext? context = null)
+    public static List<BaseGTask> ToStartGTask(this GTaskModel[] @this, GTaskContext? context = null,
+        long entityFirstNodeId = 0)
     {
-        var result = new BaseGTask[@this.Length];
-        for (var i = 0; i < @this.Length; i++)
+        //过滤掉没有链表关系的任务
+        //TODO 后续会尝试保留后台任务
+        // var counts = new Dictionary<long, int>();
+        // foreach (var model in @this)
+        // {
+        //     foreach (var nextId in model.NextIds)
+        //     {
+        //         counts[nextId] = counts.TryGetValue(nextId, out var count) ? count + 1 : 1;
+        //     }
+        // }
+
+
+        List<BaseGTask> gTasks = [];
+
+        foreach (var t in @this)
         {
+            // if (!counts.TryGetValue(t.Id, out var count) && t.Id != entityFirstNodeId) continue;
+            if (t.Id != entityFirstNodeId) continue;
+
             context ??= GTaskContext.Empty;
 
-            result[i] = Services.Get<GTaskFactory>()!.CreateTask(@this[i], context);
+            gTasks.Add(Services.Get<GTaskFactory>()!.CreateTask(t, context));
         }
 
 
-        return result;
+        return gTasks;
     }
 
     /// <summary>
@@ -178,7 +207,7 @@ public static class GTaskExtensions
     /// <param name="this"></param>
     /// <param name="context"></param>
     /// <returns></returns>
-    public static BaseGTask ToGTask(this GTaskModel @this, GTaskContext? context = null)
+    public static BaseGTask ToStartGTask(this GTaskModel @this, GTaskContext? context = null)
     {
         context ??= GTaskContext.Empty;
         return Services.Get<GTaskFactory>()!.CreateTask(@this, context);
@@ -188,20 +217,26 @@ public static class GTaskExtensions
     /// 获取下一个任务, 如果没有, 则判断model的NextModels, 如果存在, 则创建新的任务,并添加到NextTasks中,返回NextTasks
     /// </summary>
     /// <param name="this"></param>
-    /// <param name="context"></param>
     /// <returns></returns>
-    public static List<BaseGTask> GetNextTasks(this BaseGTask @this, GTaskContext? context)
+    public static List<BaseGTask> GetNextTasks(this BaseGTask @this)
     {
-        context ??= GTaskContext.Empty;
-
         if (@this.NextTasks.Count == 0)
         {
+            // context ??= GTaskContext.Empty;
             var factory = Services.Get<GTaskFactory>()!;
             foreach (var model in @this.Model.NextModels)
             {
-                @this.NextTasks.Add(factory.CreateTask(model, context));
+                var baseGTask = factory.CreateTask(model, @this.Context);
+                @this.NextTasks.Add(baseGTask);
             }
         }
+
+        if (@this.FlowName != null)
+        {
+            var flow = @this.Context.GetStartTasks(@this.FlowName);
+            flow.AddRange(@this.NextTasks);
+        }
+
 
         return @this.NextTasks;
     }

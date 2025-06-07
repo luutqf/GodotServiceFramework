@@ -1,5 +1,8 @@
+using GodotServiceFramework.Context.Service;
 using GodotServiceFramework.Extensions;
 using GodotServiceFramework.GTaskV2.Entity;
+using GodotServiceFramework.GTaskV2.Model;
+using GodotServiceFramework.GTaskV2.Tasks;
 using GodotServiceFramework.GTaskV2.Util;
 using GodotServiceFramework.Util;
 using SigmusV2.GodotServiceFramework.Util;
@@ -15,16 +18,23 @@ public class GTaskFlow(GTaskContext? context)
 
     public readonly GTaskContext Context = context ?? new GTaskContext();
 
-    public BaseGTask? FirstTask { get; set; }
-    public BaseGTask? LastTask { get; set; }
+    public BaseGTask? FirstTask { get; private set; }
+
+    public BaseGTask? GTaskGraveyard { get; private set; }
 
     /// <summary>
     /// 我们仍以flow作为入口
     /// </summary>
     public void Start()
     {
-        Task.Run(() => FirstTask?.Start());
+        foreach (var task in Context.GetStartTasks(Name))
+        {
+            Task.Run(() => task.Start());
+        }
+
+        Task.Run(() => GTaskGraveyard?.Start());
     }
+
 
     public void Stop()
     {
@@ -41,12 +51,29 @@ public class GTaskFlow(GTaskContext? context)
     public void Initialize(GTaskFlowEntity entity)
     {
         Name = entity.Name;
-        var gTasks = entity.Models.ToGTask(context);
+        var gTasks = entity.Models.ToStartGTask(context, entity.FirstNodeId);
+
         FirstTask = gTasks.First(task => task.Id == entity.FirstNodeId);
-        //TODO 如果未设置, 可以自行检索哪个是最后一个
-        if (entity.LastNodeId != 0)
-            LastTask = gTasks.First(task => task.Id == entity.LastNodeId);
-        // FirstTask.Context.LastTaskId = entity.LastNodeId;
+        FirstTask.Context.AddStartTask(Name, gTasks);
+
+        foreach (var baseGTask in gTasks)
+        {
+            baseGTask.FlowName = Name;
+        }
+
+
+        var factory = Services.Get<GTaskFactory>()!;
+        var model = new GTaskModel
+        {
+            Name = nameof(Tasks.GTaskGraveyard),
+            NextIds = [],
+            Parameters = new Dictionary<string, object>
+            {
+                ["flowName"] = Name,
+            },
+        };
+        GTaskGraveyard = factory.CreateTask(model, FirstTask.Context);
+        GTaskGraveyard.FlowName = Name;
         FirstTask.Context.CommonParameters.AddRange(entity.Parameters);
     }
 }

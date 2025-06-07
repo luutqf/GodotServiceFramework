@@ -1,6 +1,7 @@
 using Godot;
 using GodotServiceFramework.GTaskV2.Model;
 using GodotServiceFramework.Util;
+using SigmusV2.GodotServiceFramework.Util;
 
 namespace GodotServiceFramework.GTaskV2;
 
@@ -9,6 +10,10 @@ namespace GodotServiceFramework.GTaskV2;
 /// </summary>
 public partial class GTaskContext : RefCounted
 {
+    public static Dictionary<long, GTaskContext> Contexts = new();
+
+    public long Id { get; set; } = SnowflakeIdGenerator.NextId();
+
     public TaskType TaskType { get; set; }
 
     public TaskStatus TaskStatus { get; set; } = TaskStatus.Default;
@@ -25,6 +30,17 @@ public partial class GTaskContext : RefCounted
 
     // public long LastTaskId { get; set; } = -1;
 
+    private readonly Dictionary<string, List<BaseGTask>> StartTasks = [];
+
+    public void AddStartTask(string name, List<BaseGTask> tasks)
+    {
+        StartTasks[name] = tasks;
+    }
+
+    public List<BaseGTask> GetStartTasks(string name)
+    {
+        return StartTasks[name];
+    }
 
     /// <summary>
     /// SessionId主要用于将运行状态,定位到一个合适的会话
@@ -36,18 +52,18 @@ public partial class GTaskContext : RefCounted
 
     public event Action<string, int> OnTag = delegate { };
 
-    public readonly HashSet<string> FlowTags = [];
+    public readonly List<string> FlowTags = [];
 
     public bool HasTag(string tag)
     {
         return FlowTags.Contains(tag);
     }
 
-    public void PutTag(int flowId, string tag)
-    {
-        FlowTags.Add(tag);
-        OnTag.Invoke(tag, flowId);
-    }
+    // public void PutTag(int flowId, string tag)
+    // {
+    //     FlowTags.Add(tag);
+    //     OnTag.Invoke(tag, flowId);
+    // }
 
     public void PutTag(string tag)
     {
