@@ -1,6 +1,9 @@
+using System.Text;
 using GodotServiceFramework.Context.Service;
 using GodotServiceFramework.GTaskV2.Entity;
 using GodotServiceFramework.GTaskV2.Model;
+using GodotServiceFramework.Util;
+using SigmusV2.Script.task_v2;
 
 namespace GodotServiceFramework.GTaskV2.Util;
 
@@ -22,26 +25,21 @@ public static class GTaskExtensions
             Parameters = paramsDict,
         };
         var baseGTask = factory.CreateTask(model, @this.Context);
+        baseGTask.Flow = @this.Flow;
         _ = baseGTask.Start();
         return baseGTask;
     }
 
-    public static void InsertAndRunFlow(this BaseGTask @this, GTaskFlowEntity entity)
+    public static void InsertAndRunFlow(this BaseGTask @this, GTaskFlowEntity entity,
+        Action<GTaskFlow>? callback = null)
     {
         var taskFlow = new GTaskFlow(context: @this.Context);
         taskFlow.Initialize(entity);
-        // if (taskFlow.GTaskGraveyard != null)
-        // {
-        //     taskFlow.GTaskGraveyard.Model.NextModels = @this.Model.NextModels;
-        //     taskFlow.GTaskGraveyard.Model.NextIds = @this.Model.NextIds;
-        //     taskFlow.GTaskGraveyard.NextTasks.AddRange(@this.NextTasks);
-        //     @this.Model.NextIds = [];
-        //     @this.Model.NextModels = [];
-        //     @this.NextTasks.Clear();
-        // }
 
         if (taskFlow.GTaskGraveyard != null)
-            taskFlow.GTaskGraveyard.OnComplete += () => { @this.Progress = 100; };
+            taskFlow.GTaskGraveyard.OnComplete += () => { callback?.Invoke(taskFlow); };
+
+        // taskFlow.GTaskGraveyard.OnComplete += () => { @this.Progress = 100; };
         taskFlow.Start();
     }
 
@@ -171,7 +169,7 @@ public static class GTaskExtensions
     /// <param name="entityFirstNodeId"></param>
     /// <returns></returns>
     public static List<BaseGTask> ToStartGTask(this GTaskModel[] @this, GTaskContext? context = null,
-        long entityFirstNodeId = 0)
+        string entityFirstNodeId = "")
     {
         //过滤掉没有链表关系的任务
         //TODO 后续会尝试保留后台任务
@@ -226,18 +224,52 @@ public static class GTaskExtensions
             var factory = Services.Get<GTaskFactory>()!;
             foreach (var model in @this.Model.NextModels)
             {
-                var baseGTask = factory.CreateTask(model, @this.Context);
-                @this.NextTasks.Add(baseGTask);
+                var task = factory.CreateTask(model, @this.Context);
+                task.Flow = @this.Flow;
+                @this.NextTasks.Add(task);
             }
         }
 
-        if (@this.FlowName != null)
-        {
-            var flow = @this.Context.GetStartTasks(@this.FlowName);
-            flow.AddRange(@this.NextTasks);
-        }
+        if (@this.Flow == null) return @this.NextTasks;
+        var flow = @this.Context.GetStartTasks(@this.Flow.Name);
+        flow.AddRange(@this.NextTasks);
 
 
         return @this.NextTasks;
+    }
+
+
+    public static void PutHistory(this BaseGTask @this, int value)
+    {
+        if (@this.Flow == null)
+        {
+            Log.Warn($"{@this.GetTitle()} 缺失flowName");
+            return;
+        }
+
+        if (!@this.Context.FlowHistory.TryGetValue(@this.Flow.Name!, out var progress))
+        {
+            progress = [];
+            @this.Context.FlowHistory[@this.Flow.Name!] = progress;
+        }
+
+        progress[@this.GetTitle()] = value;
+    }
+
+    public static void PutMessage(this BaseGTask @this, string message)
+    {
+        if (@this.Flow == null)
+        {
+            Log.Warn($"{@this.GetTitle()} 缺失flowName");
+            return;
+        }
+
+        if (!@this.Context.FlowMessage.TryGetValue(@this.Flow.Name!, out var progress))
+        {
+            progress = new StringBuilder();
+            @this.Context.FlowMessage[@this.Flow.Name!] = progress;
+        }
+
+        progress.AppendLine(message);
     }
 }

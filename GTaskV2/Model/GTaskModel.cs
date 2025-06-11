@@ -8,12 +8,12 @@ namespace GodotServiceFramework.GTaskV2.Model;
 public class GTaskModel
 {
     //节点ID, 雪花生成吧
-    public long Id { get; set; } = SnowflakeIdGenerator.NextId();
+    public string Id { get; set; } = SnowflakeIdGenerator.NextId().ToString();
 
     //Name就是任务的唯一ID, 在factory中唯一生成
     public required string Name { get; set; }
 
-    public required long[] NextIds { get; set; }
+    public required string[] NextIds { get; set; }
 
     public GTaskModel[] NextModels { get; set; } = [];
 

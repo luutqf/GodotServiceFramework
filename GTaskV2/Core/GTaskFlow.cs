@@ -27,6 +27,7 @@ public class GTaskFlow(GTaskContext? context)
     /// </summary>
     public void Start()
     {
+        Log.Info($"{Name} Started ContextId: {Context.Id}");
         foreach (var task in Context.GetStartTasks(Name))
         {
             Task.Run(() => task.Start());
@@ -58,7 +59,7 @@ public class GTaskFlow(GTaskContext? context)
 
         foreach (var baseGTask in gTasks)
         {
-            baseGTask.FlowName = Name;
+            baseGTask.Flow = this;
         }
 
 
@@ -73,7 +74,7 @@ public class GTaskFlow(GTaskContext? context)
             },
         };
         GTaskGraveyard = factory.CreateTask(model, FirstTask.Context);
-        GTaskGraveyard.FlowName = Name;
+        GTaskGraveyard.Flow = this;
         FirstTask.Context.CommonParameters.AddRange(entity.Parameters);
     }
 }

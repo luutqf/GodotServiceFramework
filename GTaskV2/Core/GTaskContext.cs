@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using System.Text;
 using Godot;
 using GodotServiceFramework.GTaskV2.Model;
 using GodotServiceFramework.Util;
@@ -10,7 +12,7 @@ namespace GodotServiceFramework.GTaskV2;
 /// </summary>
 public partial class GTaskContext : RefCounted
 {
-    public static Dictionary<long, GTaskContext> Contexts = new();
+    public static readonly ConcurrentDictionary<long, GTaskContext> Contexts = new();
 
     public long Id { get; set; } = SnowflakeIdGenerator.NextId();
 
@@ -18,19 +20,27 @@ public partial class GTaskContext : RefCounted
 
     public TaskStatus TaskStatus { get; set; } = TaskStatus.Default;
 
-    public readonly HashSet<BaseGTask> RunningTasks = [];
+    // public readonly HashSet<BaseGTask> RunningTasks = [];
 
-    public readonly List<GTaskModel> TasksHistory = [];
+    // public readonly Dictionary<BaseGTask,List<string>> Task
 
-    public readonly Dictionary<string, object> CommonParameters = [];
+    public readonly ConcurrentDictionary<string, Dictionary<string, int>> FlowHistory = [];
+
+    public readonly ConcurrentDictionary<string, StringBuilder> FlowMessage = [];
+    
+    public readonly ConcurrentDictionary<string, DateTime> EventAndTime = [];
+
+    public readonly ConcurrentDictionary<string, object> CommonParameters = [];
 
     public readonly Dictionary<string, int> ErrorCounts = [];
 
     public readonly Dictionary<string, int> FlowCounts = [];
 
+    // public readonly List<string> Messages = [];
+
     // public long LastTaskId { get; set; } = -1;
 
-    private readonly Dictionary<string, List<BaseGTask>> StartTasks = [];
+    private readonly ConcurrentDictionary<string, List<BaseGTask>> StartTasks = [];
 
     public void AddStartTask(string name, List<BaseGTask> tasks)
     {
@@ -111,28 +121,6 @@ public partial class GTaskContext : RefCounted
             }
         }
     }
-    // protected override void Dispose(bool disposing)
-    // {
-    //     try
-    //     {
-    //         foreach (var value in CommonParameters.Values)
-    //         {
-    //             switch (value)
-    //             {
-    //                 case IDisposable disposableValue:
-    //                     disposableValue.Dispose();
-    //                     break;
-    //                 case ICloseable closeable:
-    //                     closeable.Close();
-    //                     break;
-    //             }
-    //         }
-    //     }
-    //     finally
-    //     {
-    //         base.Dispose();
-    //     }
-    // }
 }
 
 public enum TaskStatus
@@ -140,6 +128,7 @@ public enum TaskStatus
     Default,
     Running,
     Stop,
+    Error,
     Pause,
     Complete
 }

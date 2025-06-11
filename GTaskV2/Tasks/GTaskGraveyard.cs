@@ -48,6 +48,14 @@ public class GTaskGraveyard(GTaskModel model, GTaskContext context) : BaseTimerG
         Log.Info($"{Context.Id}");
         GTaskContext.Contexts.TryAdd(Context.Id, Context);
         Complete();
+        foreach (var baseGTask in flow)
+        {
+            if (baseGTask.Progress > 100)
+            {
+                baseGTask.Stop();
+            }
+        }
+
         return Task.CompletedTask;
     }
 

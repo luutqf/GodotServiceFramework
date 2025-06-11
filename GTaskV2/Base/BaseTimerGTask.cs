@@ -1,5 +1,6 @@
 using GodotServiceFramework.GTaskV2.Model;
 using GodotServiceFramework.Util;
+using SigmusV2.Script.task_v2;
 using Timer = System.Threading.Timer;
 
 namespace GodotServiceFramework.GTaskV2.Base;
@@ -18,11 +19,11 @@ public abstract class BaseTimerGTask(GTaskModel model, GTaskContext context) : B
 
     protected virtual bool AutoFail { get; set; } = true;
 
-    protected virtual int Count { get; set; } = 15;
+    protected virtual int Count { get; set; } = 30;
 
     protected virtual bool Infinite { get; set; } = false;
 
-    private int _count;
+    protected int CurrentCount;
 
     private bool _running = false;
 
@@ -62,7 +63,7 @@ public abstract class BaseTimerGTask(GTaskModel model, GTaskContext context) : B
         _timer = new Timer(
             callback: TimerTask!,
             state: null,
-            dueTime: 1000,
+            dueTime: Delay * 1000,
             period: Delay * 1000);
         return 10;
     }
@@ -74,6 +75,8 @@ public abstract class BaseTimerGTask(GTaskModel model, GTaskContext context) : B
         // {
         //     return;
         // }
+        
+        
 
         if (_running) return;
         _running = true;
@@ -90,19 +93,24 @@ public abstract class BaseTimerGTask(GTaskModel model, GTaskContext context) : B
             //如果不是无限循环, 则判断执行次数
             if (!Infinite)
             {
-                if (_count >= Count)
+                if (CurrentCount >= Count)
                 {
                     _timer?.Dispose();
                     if (AutoFail)
+                    {
+                        Log.Warn($"{this.GetTitle()} 次数超限");
                         Progress = -1;
+                    }
+
                     else
                         Progress = 100;
+
                     return;
                 }
             }
 
 
-            _count++;
+            CurrentCount++;
 
             OnTimeout().Wait();
         }
@@ -120,4 +128,6 @@ public abstract class BaseTimerGTask(GTaskModel model, GTaskContext context) : B
         Progress = 100;
         _timer?.Dispose();
     }
+    
+    
 }

@@ -18,7 +18,7 @@ public partial class GTaskFlowEntity : RefCounted, IBinding
 
     [Unique(Name = "name")] public string Name { get; set; } = string.Empty;
 
-    public long FirstNodeId { get; set; }
+    public string FirstNodeId { get; set; }
 
     // /// 标记最后一个节点,不一定是真的最后一个, 但为了链接其他任务,设置它    但其实不需要,因为我不需要向所谓的最后一个节点添加, 而是向当前节点之后添加即可. 或者直接运行
     // public long LastNodeId { get; set; }

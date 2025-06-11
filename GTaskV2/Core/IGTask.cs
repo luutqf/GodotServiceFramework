@@ -4,7 +4,7 @@ namespace GodotServiceFramework.GTaskV2;
 
 public interface IGTask
 {
-    public long Id { get; }
+    public string Id { get; }
     public virtual string Name => GetType().Name;
 
     public int Progress { get; set; }
