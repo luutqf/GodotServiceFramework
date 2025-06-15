@@ -1,8 +1,7 @@
-[gd_scene load_steps=13 format=3 uid="uid://dqehbaad2h7n4"]
+[gd_scene load_steps=12 format=3 uid="uid://dqehbaad2h7n4"]
 
 [ext_resource type="PackedScene" uid="uid://cs0lckfsc3vuh" path="res://GodotServiceFramework/Console/SigmusConsole.tscn" id="1_7y4s5"]
 [ext_resource type="Script" uid="uid://ctesu14udm0ov" path="res://GodotServiceFramework/Console/ConsoleContainer.cs" id="1_njnpv"]
-[ext_resource type="Texture2D" uid="uid://b7thfqm57gl1g" path="res://icons/settings-outline.svg" id="2_2tlkn"]
 [ext_resource type="Script" uid="uid://bc3760f8p2nur" path="res://GodotServiceFramework/Console/Node/MyScrollContainer.cs" id="3_fqa6k"]
 
 [sub_resource type="Gradient" id="Gradient_tl730"]
@@ -187,7 +186,6 @@ text = "asdfasdf"
 [node name="SettingButton" type="Button" parent="VBoxContainer/HBoxContainer"]
 custom_minimum_size = Vector2(32, 0)
 layout_mode = 2
-icon = ExtResource("2_2tlkn")
 flat = true
 expand_icon = true
 

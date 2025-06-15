@@ -1,7 +1,6 @@
 using GodotServiceFramework.GTaskV2.Model;
 using GodotServiceFramework.GTaskV2.Util;
 using GodotServiceFramework.Util;
-using SigmusV2.Script.task_v2;
 using Timer = System.Threading.Timer;
 
 namespace GodotServiceFramework.GTaskV2.Base;
