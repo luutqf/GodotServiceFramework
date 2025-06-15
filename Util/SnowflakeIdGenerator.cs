@@ -1,4 +1,4 @@
-namespace SigmusV2.GodotServiceFramework.Util;
+namespace GodotServiceFramework.Util;
 
 /// <summary>
 /// 雪花算法的现代实现

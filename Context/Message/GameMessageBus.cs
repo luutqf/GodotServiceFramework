@@ -3,7 +3,7 @@ using Godot;
 using GodotServiceFramework.Context.Service;
 using GodotServiceFramework.GTask;
 
-namespace SigmusV2.GodotServiceFramework.Context;
+namespace GodotServiceFramework.Context;
 
 /// <summary>
 /// 我们在游戏内部, 设计一个消息总线.  服务于所有node和task.

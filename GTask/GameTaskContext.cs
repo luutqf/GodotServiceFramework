@@ -1,6 +1,6 @@
 using Godot;
 using GodotServiceFramework.GTask;
-using SigmusV2.GodotServiceFramework.Context;
+using GodotServiceFramework.Context;
 
 [Channel(["task"])]
 public class GameTaskContext : IMessageConsumer

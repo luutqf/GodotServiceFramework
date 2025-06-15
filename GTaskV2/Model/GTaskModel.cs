@@ -1,4 +1,5 @@
-using SigmusV2.GodotServiceFramework.Util;
+
+using GodotServiceFramework.Util;
 
 namespace GodotServiceFramework.GTaskV2.Model;
 

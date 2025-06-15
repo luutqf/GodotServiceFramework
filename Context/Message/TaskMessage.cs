@@ -1,6 +1,6 @@
 using Godot;
 
-namespace SigmusV2.GodotServiceFramework.Context;
+namespace GodotServiceFramework.Context;
 
 public partial class TaskMessage : RefCounted
 {

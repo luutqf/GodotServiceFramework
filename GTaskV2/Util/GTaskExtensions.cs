@@ -1,9 +1,7 @@
-using System.Text;
 using GodotServiceFramework.Context.Service;
 using GodotServiceFramework.GTaskV2.Entity;
 using GodotServiceFramework.GTaskV2.Model;
 using GodotServiceFramework.Util;
-using SigmusV2.Script.task_v2;
 
 namespace GodotServiceFramework.GTaskV2.Util;
 
@@ -271,5 +269,11 @@ public static class GTaskExtensions
         }
 
         progress.Add(message);
+    }
+    
+    
+    public static string GetTitle(this BaseGTask @this)
+    {
+        return @this.Parameters.TryGetValue("title", out var title) ? title.ToString()! : @this.Name;
     }
 }

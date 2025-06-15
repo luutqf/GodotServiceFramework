@@ -1,8 +1,7 @@
 ﻿using GodotServiceFramework.Context.Service;
 using GodotServiceFramework.Util;
 using Newtonsoft.Json.Linq;
-using SigmusV2.GodotServiceFramework.Context;
-using SigmusV2.GodotServiceFramework.Util;
+using GodotServiceFramework.Context;
 
 namespace GodotServiceFramework.GTask;
 

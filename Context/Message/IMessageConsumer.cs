@@ -1,6 +1,6 @@
 using Godot;
 
-namespace SigmusV2.GodotServiceFramework.Context;
+namespace GodotServiceFramework.Context;
 
 /// <summary>
 /// 每个消费者必须实现这个接口,同时使用下面的注解属性才能完成注册
