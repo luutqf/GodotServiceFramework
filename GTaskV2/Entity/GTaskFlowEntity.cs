@@ -35,24 +35,35 @@ public partial class GTaskFlowEntity : RefCounted, IBinding
     {
         get
         {
-            var models = JsonConvert.DeserializeObject<GTaskModel[]>(Content)!;
-            foreach (var model in models)
+            GTaskModel[] models;
+            try
             {
-                var nextModels = new GTaskModel[model.NextIds.Length];
-                for (var i = 0; i < model.NextIds.Length; i++)
+                models = JsonConvert.DeserializeObject<GTaskModel[]>(Content)!;
+                foreach (var model in models)
                 {
-                    try
+                    var nextModels = new GTaskModel[model.NextIds.Length];
+                    for (var i = 0; i < model.NextIds.Length; i++)
                     {
-                        nextModels[i] = models.First(m => m.Id == model.NextIds[i]);
+                        try
+                        {
+                            nextModels[i] = models.First(m => m.Id == model.NextIds[i]);
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Warn($"GTaskFlowEntity.Models: Next model not found for ID: {model.NextIds[i]}",
+                                BbColor.Red);
+                        }
                     }
-                    catch (Exception e)
-                    {
-                        Log.Warn($"GTaskFlowEntity.Models: Next model not found for ID: {model.NextIds[i]}",
-                            BbColor.Red);
-                    }
-                }
 
-                model.NextModels = nextModels;
+                    model.NextModels = nextModels;
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Info("------------------>");
+                Log.Warn(Content);
+                Log.Info("<------------------");
+                throw;
             }
 
             return models;

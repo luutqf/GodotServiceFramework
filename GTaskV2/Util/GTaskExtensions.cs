@@ -266,10 +266,10 @@ public static class GTaskExtensions
 
         if (!@this.Context.FlowMessage.TryGetValue(@this.Flow.Name!, out var progress))
         {
-            progress = new StringBuilder();
+            progress = [];
             @this.Context.FlowMessage[@this.Flow.Name!] = progress;
         }
 
-        progress.AppendLine(message);
+        progress.Add(message);
     }
 }

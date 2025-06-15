@@ -26,8 +26,8 @@ public partial class GTaskContext : RefCounted
 
     public readonly ConcurrentDictionary<string, Dictionary<string, int>> FlowHistory = [];
 
-    public readonly ConcurrentDictionary<string, StringBuilder> FlowMessage = [];
-    
+    public readonly ConcurrentDictionary<string, List<string>> FlowMessage = [];
+
     public readonly ConcurrentDictionary<string, DateTime> EventAndTime = [];
 
     public readonly ConcurrentDictionary<string, object> CommonParameters = [];

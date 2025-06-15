@@ -393,7 +393,7 @@ public static class DockerClientExtensions
             var execCreateParameters = new ContainerExecCreateParameters
             {
                 User = "root",
-                Cmd = ["/bin/sh", "-c", $"tail -{line}  {filePath} "],
+                Cmd = ["/bin/sh", "-c", $"tail -{line}f  {filePath} "],
                 AttachStdout = true,
                 AttachStderr = true,
                 Tty = false
@@ -429,8 +429,6 @@ public static class DockerClientExtensions
                 var text = Encoding.UTF8.GetString(buffer, 0, result.Count);
                 onNewLine?.Invoke(text, lineCount);
             }
-
-            Log.Info("完事了?");
         }
         catch (Exception ex)
         {
@@ -443,7 +441,7 @@ public static class DockerClientExtensions
     /// 使用 tail -f 命令实时监听文件内容变化
     /// </summary>
     public static async Task MonitorFileRealTime(this DockerClient dockerClient, string containerId, string filePath,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default, int line = 1)
     {
         try
         {
@@ -456,7 +454,7 @@ public static class DockerClientExtensions
                     AttachStdout = true,
                     AttachStdin = false,
                     Tty = false,
-                    Cmd = ["tail", "-f", filePath]
+                    Cmd = ["tail", $"-{line}f", filePath]
                 }, cancellationToken);
 
             using var stream = await dockerClient.Exec.StartAndAttachContainerExecAsync(

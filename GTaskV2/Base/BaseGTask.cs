@@ -62,7 +62,7 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
                     Log.Warn("后台任务错误");
                     break;
                 case < 0 or > 100:
-                    Log.Warn("任务进度无法修改");
+                    Log.Warn($"任务进度无法修改为{value}");
 
                     return;
             }
