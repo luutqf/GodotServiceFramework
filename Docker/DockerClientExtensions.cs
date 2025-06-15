@@ -10,6 +10,19 @@ namespace GodotServiceFramework.Extensions;
 /// </summary>
 public static class DockerClientExtensions
 {
+    public static async Task<bool> StartContainer(this DockerClient @this, string containerId)
+    {
+        return await @this.Containers.StartContainerAsync(containerId,
+            new ContainerStartParameters());
+    }
+
+    public static async Task<bool> StartContainerByName(this DockerClient @this, string containerName)
+    {
+        var basic = await @this.GetContainerBasicByName(containerName);
+        return await @this.Containers.StartContainerAsync(basic.id,
+            new ContainerStartParameters());
+    }
+
     /// <summary>
     /// 启动一个容器， 需要提前准备parameters
     /// </summary>
@@ -113,6 +126,30 @@ public static class DockerClientExtensions
 
         var container = containers.FirstOrDefault(c =>
             c.ID.Equals(containerId, StringComparison.OrdinalIgnoreCase));
+        return container != null;
+    }
+
+    public static async Task<bool> IsRunning(this DockerClient @this, string containerId)
+    {
+        var containers = await @this.Containers.ListContainersAsync(
+            new ContainersListParameters
+            {
+            });
+
+        var container = containers.FirstOrDefault(c =>
+            c.ID.Equals(containerId, StringComparison.OrdinalIgnoreCase));
+        return container != null;
+    }
+
+    public static async Task<bool> IsRunningByName(this DockerClient @this, string containerName)
+    {
+        var basic = await @this.GetContainerBasicByName(containerName);
+
+        var containers = await @this.Containers.ListContainersAsync(
+            new ContainersListParameters());
+
+        var container = containers.FirstOrDefault(c =>
+            c.ID.Equals(basic.id, StringComparison.OrdinalIgnoreCase));
         return container != null;
     }
 
@@ -356,7 +393,7 @@ public static class DockerClientExtensions
             var execCreateParameters = new ContainerExecCreateParameters
             {
                 User = "root",
-                Cmd = ["/bin/sh", "-c", $"tail -{line}  {filePath} "],
+                Cmd = ["/bin/sh", "-c", $"tail -{line}f  {filePath} "],
                 AttachStdout = true,
                 AttachStderr = true,
                 Tty = false
@@ -396,6 +433,66 @@ public static class DockerClientExtensions
         catch (Exception ex)
         {
             Log.Warn($"监听容器文件中止: {ex.Message}");
+        }
+    }
+
+
+    /// <summary>
+    /// 使用 tail -f 命令实时监听文件内容变化
+    /// </summary>
+    public static async Task MonitorFileRealTime(this DockerClient dockerClient, string containerId, string filePath,
+        CancellationToken cancellationToken = default, int line = 1)
+    {
+        try
+        {
+            Console.WriteLine($"开始监听容器 {containerId} 中的文件 {filePath}");
+
+            var execCreateResponse = await dockerClient.Exec.ExecCreateContainerAsync(containerId,
+                new ContainerExecCreateParameters
+                {
+                    AttachStderr = true,
+                    AttachStdout = true,
+                    AttachStdin = false,
+                    Tty = false,
+                    Cmd = ["tail", $"-{line}f", filePath]
+                }, cancellationToken);
+
+            using var stream = await dockerClient.Exec.StartAndAttachContainerExecAsync(
+                execCreateResponse.ID,
+                false,
+                cancellationToken);
+
+            var buffer = new byte[4096];
+
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    var result = await stream.ReadOutputAsync(buffer, 0, buffer.Length, cancellationToken);
+
+                    if (result.Count > 0)
+                    {
+                        var content = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                        // Log.Info($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 文件更新:", BbColor.Yellow);
+                        Log.Info(content.TrimEnd(), BbColor.Yellow);
+                        // Log.Info("---", BbColor.Yellow);
+                    }
+                    else
+                    {
+                        // 如果没有数据，稍微延迟一下避免CPU占用过高
+                        await Task.Delay(100, cancellationToken);
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"监听文件时发生错误: {ex.Message}");
+            throw;
         }
     }
 
@@ -692,11 +789,17 @@ public static class DockerClientExtensions
                 All = true, // 包括停止的容器
             });
 
-        var container = containers.FirstOrDefault(c =>
-            c.Names.Any(n => n.Equals(containerName, StringComparison.OrdinalIgnoreCase)))!;
+        try
+        {
+            var container = containers.First(c =>
+                c.Names.Any(n => n.Equals(containerName, StringComparison.OrdinalIgnoreCase)));
 
-        return (container.ID, container.State, container.Image)
-            ;
+            return (container.ID, container.State, container.Image);
+        }
+        catch (Exception)
+        {
+            return (string.Empty, string.Empty, string.Empty);
+        }
     }
 
     // 删除容器

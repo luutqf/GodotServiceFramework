@@ -10,6 +10,7 @@ namespace GodotServiceFramework.GConsole;
 /// <summary>
 /// 
 /// </summary>
+[GlobalClass]
 public partial class SigmusConsole : Control
 {
     [ChildNode("MessageBox")] private MessageBox? _messageBox;

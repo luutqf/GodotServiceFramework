@@ -1,6 +1,7 @@
 using GodotServiceFramework.GTaskV2.Model;
 using GodotServiceFramework.GTaskV2.Util;
 using GodotServiceFramework.Util;
+using SigmusV2.Script.task_v2;
 
 namespace GodotServiceFramework.GTaskV2;
 
@@ -20,6 +21,14 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
 {
     public virtual string Name => GetType().Name;
 
+    public event Action OnComplete = delegate { };
+    public event Action OnError = delegate { };
+
+    public GTaskFlow? Flow { get; set; }
+
+    // 失败重试
+    protected virtual bool Retry { get; set; } = false;
+
     private int _progress;
 
     public int Progress
@@ -33,23 +42,34 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
                 return;
             }
 
+
             switch (_progress)
             {
+                //结束后台任务
+                case TaskBackground when value == 100:
+                    Complete();
+                    OnComplete.Invoke();
+                    Destroy();
+                    return;
                 //任务处于后台运行状态, 可以结束. 不再处理后续任务
                 case TaskBackground when value >= TaskComplete:
                     _progress = value;
+                    Log.Warn("????");
                     Destroy();
                     break;
+
                 case TaskBackground when value < 0:
                     Log.Warn("后台任务错误");
                     break;
-                case < 0 or >= 100:
-                    Log.Warn("任务进度无法修改");
+                case < 0 or > 100:
+                    Log.Warn($"任务进度无法修改为{value}");
 
                     return;
             }
 
             _progress = value;
+            this.PutHistory(value);
+
             ProgressHandle(value);
         }
     }
@@ -69,7 +89,8 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
 
             case TaskStart:
             {
-                Context.RunningTasks.Add(this);
+                // Context.RunningTasks.Add(this);
+                // Context.TasksMessage[Id]
                 break;
             }
 
@@ -79,11 +100,11 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
 
                 Destroy();
                 StartNext();
-
+                OnComplete.Invoke();
                 break;
             }
 
-            case > TaskComplete:
+            case > TaskComplete and < CompleteLine:
             {
                 Destroy();
                 break;
@@ -91,7 +112,9 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
 
             case TaskError:
             {
-                Log.Error($"{Name} error");
+                Log.Warn($"❌ {this.GetTitle()} error");
+                OnError.Invoke();
+                Context.TaskStatus = TaskStatus.Error;
                 Destroy();
                 break;
             }
@@ -118,19 +141,12 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
 
     private void StartNext()
     {
-        var nextTasks = this.GetNextTasks(Context);
+        var nextTasks = this.GetNextTasks();
         if (nextTasks.Count != 0)
             foreach (var nextTask in nextTasks)
             {
                 _ = nextTask.Start();
             }
-        else
-        {
-            if (Context.RunningTasks.Count != 0)
-            {
-                Log.Info($"{Name}任务已执行完毕, 还有{Context.RunningTasks.Count}个任务未完成");
-            }
-        }
     }
 
     public Dictionary<string, object> Parameters { get; set; } = [];
@@ -142,17 +158,24 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
 
     public GTaskContext Context { get; set; } = context;
 
-    public long Id => Model.Id;
+    public string Id => Model.Id;
 
 
     public virtual void BeforeStart()
     {
     }
 
+    // public virtual void OnError()
+    // {
+    // }
+
     protected virtual bool PreCheck()
     {
         switch (Context.TaskStatus)
         {
+            case TaskStatus.Error:
+                Log.Warn("任务处于错误状态,禁止启动");
+                return false;
             case TaskStatus.Pause or TaskStatus.Stop:
                 Log.Warn("任务处于暂停或停止状态");
                 return false;
@@ -181,6 +204,8 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
 
         BeforeStart();
 
+        // Context.TasksHistory.Add(Model);
+
         try
         {
             switch (Progress)
@@ -188,12 +213,14 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
                 case TaskDefault:
                 {
                     Progress = TaskStart;
-                    await Run();
+                    var run = await Run();
+                    Progress = run;
                     return true;
                 }
                 case TaskBackground:
                 {
-                    await Run();
+                    var run = await Run();
+                    Progress = run;
                     return true;
                 }
                 case > TaskDefault and < TaskComplete:
@@ -206,7 +233,7 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
                     Log.Warn("任务处于错误状态");
                     return false;
                 }
-                case >= TaskComplete or TaskSelfSkip or TaskTagSkip:
+                case TaskComplete or TaskSelfSkip or TaskTagSkip:
                 {
                     StartNext();
                     return true;
@@ -226,10 +253,11 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
         }
     }
 
-    protected abstract Task Run();
+    protected abstract Task<int> Run();
 
-    public bool Stop()
+    public virtual bool Stop()
     {
+        Destroy();
         return true;
     }
 
@@ -238,12 +266,12 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
         Parameters = parameters ?? [];
     }
 
-    public void Pause()
+    public virtual void Pause()
     {
         Context.TaskStatus = TaskStatus.Pause;
     }
 
-    public void Resume()
+    public virtual void Resume()
     {
         Context.TaskStatus = TaskStatus.Running;
         _ = Start();
@@ -263,9 +291,30 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
     }
 
 
-    private void Destroy()
+    protected virtual void Destroy()
     {
-        Context.RunningTasks.Remove(this);
+        foreach (var value in Parameters.Values)
+        {
+            switch (value)
+            {
+                case IDisposable disposableValue:
+                    disposableValue.Dispose();
+                    break;
+                case ICloseable closeable:
+                    closeable.Close();
+                    break;
+            }
+        }
+
+        // Context.RunningTasks.Remove(this);
+        // OnComplete = delegate { };
+
+
+        // if (Id == Context.LastTaskId)
+        // {
+        //     Log.Info("任务上下文终结, 释放资源?");
+        //     Context.Dispose();
+        // }
     }
 
 
@@ -282,13 +331,16 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
     public const int TaskComplete = 100;
 
     //自行跳过
-    public const int TaskSelfSkip = -5;
+    public const int TaskSelfSkip = 500;
 
     //标签跳过
-    public const int TaskTagSkip = -3;
+    public const int TaskTagSkip = 300;
 
     //跳过所有
-    public const int SkipAllTask = -100;
+    public const int SkipAllTask = 1000;
 
-    public const int TaskBackground = -4;
+    public const int CompleteLine = 300;
+
+    public const int TaskBackground = 301;
+    // public const int Task = 301;
 }

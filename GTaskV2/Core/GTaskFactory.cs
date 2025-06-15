@@ -60,7 +60,5 @@ public partial class GTaskFactory : AutoGodotService
         return task;
     }
 
-    public override void Destroy()
-    {
-    }
+
 }

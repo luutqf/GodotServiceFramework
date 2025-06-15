@@ -5,9 +5,8 @@ namespace GodotServiceFramework.GTaskV2.Tasks;
 
 public class SoundGTask(GTaskModel model, GTaskContext context) : BaseGTask(model, context)
 {
-    
-    protected override Task Run()
+    protected override async Task<int> Run()
     {
-        return Task.CompletedTask;
+        return 100;
     }
 }

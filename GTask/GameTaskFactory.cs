@@ -109,10 +109,9 @@ public partial class GameTaskFactory : AutoGodotService, ICloseable
     {
         _tasks.Remove(id);
     }
+    
 
-
-
-    public override void Destroy()
+    public override void _ExitTree()
     {
         Close();
     }

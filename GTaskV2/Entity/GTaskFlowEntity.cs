@@ -1,6 +1,7 @@
 using Godot;
 using GodotServiceFramework.Binding;
 using GodotServiceFramework.GTaskV2.Model;
+using GodotServiceFramework.Util;
 using Newtonsoft.Json;
 using SQLite;
 
@@ -13,12 +14,14 @@ public partial class GTaskFlowEntity : RefCounted, IBinding
     [Column("id")]
     public int Id { get; set; }
 
+    public string Description { get; set; }
+
     [Unique(Name = "name")] public string Name { get; set; } = string.Empty;
 
-    public long FirstNodeId { get; set; }
-    
-    /// 标记最后一个节点,不一定是真的最后一个, 但为了链接其他任务,设置它
-    public long LastNodeId { get; set; }
+    public string FirstNodeId { get; set; }
+
+    // /// 标记最后一个节点,不一定是真的最后一个, 但为了链接其他任务,设置它    但其实不需要,因为我不需要向所谓的最后一个节点添加, 而是向当前节点之后添加即可. 或者直接运行
+    // public long LastNodeId { get; set; }
 
     [Ignore]
     public Dictionary<string, object> Parameters =>
@@ -32,16 +35,35 @@ public partial class GTaskFlowEntity : RefCounted, IBinding
     {
         get
         {
-            var models = JsonConvert.DeserializeObject<GTaskModel[]>(Content)!;
-            foreach (var model in models)
+            GTaskModel[] models;
+            try
             {
-                var nextModels = new GTaskModel[model.NextIds.Length];
-                for (var i = 0; i < model.NextIds.Length; i++)
+                models = JsonConvert.DeserializeObject<GTaskModel[]>(Content)!;
+                foreach (var model in models)
                 {
-                    nextModels[i] = models.First(m => m.Id == model.NextIds[i]);
-                }
+                    var nextModels = new GTaskModel[model.NextIds.Length];
+                    for (var i = 0; i < model.NextIds.Length; i++)
+                    {
+                        try
+                        {
+                            nextModels[i] = models.First(m => m.Id == model.NextIds[i]);
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Warn($"GTaskFlowEntity.Models: Next model not found for ID: {model.NextIds[i]}",
+                                BbColor.Red);
+                        }
+                    }
 
-                model.NextModels = nextModels;
+                    model.NextModels = nextModels;
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Info("------------------>");
+                Log.Warn(Content);
+                Log.Info("<------------------");
+                throw;
             }
 
             return models;

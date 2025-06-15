@@ -19,9 +19,7 @@ public partial class GameTaskService : AutoGodotService
 
 
 
-    public override void Destroy()
-    {
-    }
+
 
     public bool CreateGameTaskEntity(GameTaskEntity gameTaskEntity)
     {

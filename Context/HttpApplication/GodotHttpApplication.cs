@@ -27,8 +27,8 @@ public partial class AutoGodotHttpApplication : AutoGodotService
             Console.WriteLine($"无法创建HttpServer,请确认软件权限 {e}");
         }
     }
-
-    public override void Destroy()
+    
+    public override void _ExitTree()
     {
         _restServer?.Stop();
     }

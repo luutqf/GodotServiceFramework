@@ -1,4 +1,6 @@
 using GodotServiceFramework.GTaskV2.Model;
+using GodotServiceFramework.Util;
+using SigmusV2.Script.task_v2;
 using Timer = System.Threading.Timer;
 
 namespace GodotServiceFramework.GTaskV2.Base;
@@ -10,14 +12,21 @@ namespace GodotServiceFramework.GTaskV2.Base;
 /// <param name="context"></param>
 public abstract class BaseTimerGTask(GTaskModel model, GTaskContext context) : BaseGTask(model, context)
 {
+    protected object LockObject { get; } = new();
+
     private Timer? _timer;
-    private int Delay { get; set; } = 1;
+    protected virtual int Delay { get; set; } = 1;
 
-    private bool AutoFail { get; set; } = true;
+    protected virtual bool AutoFail { get; set; } = true;
 
-    private int Count { get; set; } = 15;
+    protected virtual int Count { get; set; } = 30;
 
-    private int _count;
+    protected virtual bool Infinite { get; set; } = false;
+
+    protected int CurrentCount;
+
+    private bool _running = false;
+
 
     public override void BeforeStart()
     {
@@ -41,37 +50,77 @@ public abstract class BaseTimerGTask(GTaskModel model, GTaskContext context) : B
         {
             AutoFail = Convert.ToBoolean(autoFail);
         }
+
+        if (Parameters.TryGetValue("infinite", out var infinite))
+        {
+            Infinite = Convert.ToBoolean(infinite);
+        }
     }
 
-    protected override Task Run()
+    protected override async Task<int> Run()
     {
         // 第一个参数是回调方法，第二个是状态对象，第三个是启动延迟时间，第四个是间隔时间
         _timer = new Timer(
             callback: TimerTask!,
             state: null,
-            dueTime: 1000,
+            dueTime: Delay * 1000,
             period: Delay * 1000);
-        return Task.CompletedTask;
+        return 10;
     }
 
 
     private void TimerTask(object state)
     {
-        if (_count >= Count)
-        {
-            _timer?.Dispose();
-            if (AutoFail)
-                Progress = -1;
-            else
-                Progress = 100;
-            return;
-        }
+        // if (!Monitor.TryEnter(LockObject))
+        // {
+        //     return;
+        // }
+        
+        
 
-        _count++;
-        OnTimeout();
+        if (_running) return;
+        _running = true;
+
+        try
+        {
+            if (Progress is >= 100 and < CompleteLine)
+            {
+                Log.Info("Task already completed, no need to run timer task again.");
+                return;
+            }
+
+
+            //如果不是无限循环, 则判断执行次数
+            if (!Infinite)
+            {
+                if (CurrentCount >= Count)
+                {
+                    _timer?.Dispose();
+                    if (AutoFail)
+                    {
+                        Log.Warn($"{this.GetTitle()} 次数超限");
+                        Progress = -1;
+                    }
+
+                    else
+                        Progress = 100;
+
+                    return;
+                }
+            }
+
+
+            CurrentCount++;
+
+            OnTimeout().Wait();
+        }
+        finally
+        {
+            _running = false;
+        }
     }
 
-    protected abstract void OnTimeout();
+    protected abstract Task OnTimeout();
 
 
     protected override void Complete()
@@ -79,4 +128,6 @@ public abstract class BaseTimerGTask(GTaskModel model, GTaskContext context) : B
         Progress = 100;
         _timer?.Dispose();
     }
+    
+    
 }

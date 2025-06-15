@@ -1,4 +1,8 @@
+using Godot;
 using GodotServiceFramework.Context.Service;
+using GodotServiceFramework.Db;
+using GodotServiceFramework.GTaskV2.Entity;
+using SQLite;
 
 namespace GodotServiceFramework.GTaskV2.Service;
 
@@ -7,8 +11,20 @@ namespace GodotServiceFramework.GTaskV2.Service;
 /// </summary>
 public partial class GTaskEntityService : AutoGodotService
 {
-    public override void Destroy()
+    private readonly SQLiteConnection _db;
+
+    public GTaskEntityService()
     {
+        var globalizePath = ProjectSettings.GlobalizePath("user://data/db.sqlite");
+        _db = SqliteTool.Db(globalizePath, out _,
+            initTables:
+            [
+                typeof(GTaskFlowEntity)
+            ]);
     }
-    
+
+    public GTaskFlowEntity GetFlowEntity(string flowName)
+    {
+        return _db.Table<GTaskFlowEntity>().First(entity => entity.Name == flowName);
+    }
 }

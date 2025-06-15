@@ -468,7 +468,5 @@ public partial class SceneStatsManager : AutoGodotService
         return null;
     }
 
-    public override void Destroy()
-    {
-    }
+
 }

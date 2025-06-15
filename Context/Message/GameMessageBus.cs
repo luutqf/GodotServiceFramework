@@ -112,7 +112,8 @@ public partial class GameMessageBus : AutoGodotService
             Services.Get<GameTaskFactory>()!.OnTaskAdded += Register;
     }
 
-    public override void Destroy()
+
+    public override void _ExitTree()
     {
         if (Engine.GetMainLoop() is SceneTree sceneTree)
             sceneTree.NodeAdded -= Register;

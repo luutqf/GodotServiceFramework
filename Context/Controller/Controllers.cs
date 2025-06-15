@@ -405,7 +405,7 @@ public partial class Controllers : Service.AutoGodotService
         Instance = this;
     }
 
-    public override void Destroy()
+    public override void _ExitTree()
     {
         Instance?._controllerTypes.Clear();
         Instance?._mappings.Clear();
