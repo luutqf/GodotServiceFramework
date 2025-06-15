@@ -21,7 +21,7 @@ public static class AutoStartup
     {
         try
         {
-            if (Engine.IsEditorHint() || Engine.IsEmbeddedInEditor()) return;
+            if (Engine.IsEditorHint()) return;
 
             RegisterService(typeof(ConfigStore));
             RegisterService(typeof(SceneStatsManager));

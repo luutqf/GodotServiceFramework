@@ -82,10 +82,10 @@ public partial class SceneStatsManager : AutoGodotService
     private Node? _defaultParent;
 
 
-    public PackedScene LoadScene(string path)
+    public PackedScene LoadScene(string path, int index = 0)
     {
         var packedScene = GD.Load<PackedScene>(path);
-        var name = packedScene._Bundled["names"].As<Array<string>>()[0];
+        var name = packedScene._Bundled["names"].As<Array<string>>()[index];
 
         name = name.ToLower();
         _packedScenes.TryAdd(name, packedScene);
