@@ -54,7 +54,7 @@ public static class NodeUtils
             }
 
             node.CallDeferred(Node.MethodName.RemoveChild, child);
-
+            child.CallDeferred(Node.MethodName.QueueFree);
         }
     }
 
@@ -170,7 +170,6 @@ public static class NodeUtils
     }
 
 
-
     /// <summary>
     /// 通过类型获取最近的父节点
     ///
@@ -217,7 +216,7 @@ public static class NodeUtils
     public static void SetBindValue(this Node @this, object? value)
     {
         if (value == null) return;
-        
+
         switch (@this)
         {
             case Label label:

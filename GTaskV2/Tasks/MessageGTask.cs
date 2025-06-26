@@ -4,7 +4,7 @@ using GodotServiceFramework.Util;
 
 namespace GodotServiceFramework.GTaskV2.Tasks;
 
-public class MessageGTask(GTaskModel model, GTaskContext context) : BaseGTask(model, context)
+public class MessageGTask(GTaskModel model, GTaskFlow flow) : BaseGTask(model, flow)
 {
     protected override async Task<int> Run()
     {

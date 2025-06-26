@@ -28,7 +28,8 @@ public partial class GTaskFactory : AutoGodotService
             {
                 if (type.IsAbstract || type.IsInterface) continue;
                 var instance =
-                    (BaseGTask)Activator.CreateInstance(type, GTaskModel.DefaultModel, GTaskContext.Empty)!;
+                    (BaseGTask)Activator.CreateInstance(type, GTaskModel.DefaultModel,
+                        new GTaskFlow(GTaskContext.Empty))!;
                 _taskTypes.TryAdd(instance.Name, type);
                 Log.Debug($"Task {instance.Name} has been found");
             }
@@ -39,8 +40,8 @@ public partial class GTaskFactory : AutoGodotService
     // {
     //     
     // }
-    
-    public BaseGTask CreateTask(GTaskModel model, GTaskContext context)
+
+    public BaseGTask CreateTask(GTaskModel model, GTaskFlow flow)
     {
         if (!_taskTypes.TryGetValue(model.Name, out var type))
         {
@@ -49,16 +50,13 @@ public partial class GTaskFactory : AutoGodotService
         }
 
 
-        var task = (BaseGTask)Activator.CreateInstance(type, model, context)!;
+        var task = (BaseGTask)Activator.CreateInstance(type, model, flow)!;
 
 
         task.Model = model;
         task.Parameters = model.Parameters;
-
-        task.Context = context;
+        task.Flow = flow;
 
         return task;
     }
-
-
 }

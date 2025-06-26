@@ -4,11 +4,11 @@
 [ext_resource type="Texture2D" uid="uid://cguuhblbc6uuf" path="res://Image/头像02.jpeg" id="2_dwqmv"]
 [ext_resource type="Script" uid="uid://dn653xkyl7cba" path="res://GodotServiceFramework/Console/Node/MyRichTextLabel.cs" id="3_wnt22"]
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_wnt22"]
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_0rtgj"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_tf6n5"]
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_0rtgj"]
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_wnt22"]
 
 [node name="TextLineControl" type="VBoxContainer"]
 anchors_preset = 15
@@ -41,36 +41,12 @@ theme_override_constants/margin_left = 5
 layout_mode = 2
 size_flags_horizontal = 3
 focus_mode = 2
-theme_override_colors/table_border = Color(0, 0, 0, 0)
 theme_override_colors/selection_color = Color(0.0117647, 0.662745, 0.956863, 1)
-theme_override_styles/fill = SubResource("StyleBoxEmpty_wnt22")
-theme_override_styles/background = SubResource("StyleBoxEmpty_tf6n5")
+theme_override_colors/table_border = Color(0, 0, 0, 0)
 theme_override_styles/normal = SubResource("StyleBoxEmpty_0rtgj")
+theme_override_styles/background = SubResource("StyleBoxEmpty_tf6n5")
+theme_override_styles/fill = SubResource("StyleBoxEmpty_wnt22")
 bbcode_enabled = true
 fit_content = true
 selection_enabled = true
 script = ExtResource("3_wnt22")
-
-[node name="ButtonScrollContainer" type="ScrollContainer" parent="."]
-visible = false
-custom_minimum_size = Vector2(0, 32)
-layout_mode = 2
-size_flags_vertical = 3
-horizontal_scroll_mode = 3
-vertical_scroll_mode = 0
-
-[node name="ButtonBox" type="HBoxContainer" parent="ButtonScrollContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 50
-alignment = 1
-
-[node name="Button" type="Button" parent="ButtonScrollContainer/ButtonBox"]
-custom_minimum_size = Vector2(50, 32)
-layout_mode = 2
-text = "button"
-
-[node name="Button2" type="Button" parent="ButtonScrollContainer/ButtonBox"]
-custom_minimum_size = Vector2(50, 32)
-layout_mode = 2
-text = "button"

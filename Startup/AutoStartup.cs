@@ -9,9 +9,6 @@ using GodotServiceFramework.Context.Service;
 using GodotServiceFramework.Extensions;
 using GodotServiceFramework.Nodes;
 using GodotServiceFramework.Util;
-using AutoGodotService = GodotServiceFramework.Context.Service.AutoGodotService;
-using Controllers = GodotServiceFramework.Context.Controller.Controllers;
-using Environment = System.Environment;
 
 namespace GodotServiceFramework.Startup;
 
@@ -133,8 +130,11 @@ public static class AutoStartup
 
         var service = (IService)Activator.CreateInstance(type)!;
 
-        if (service is GodotObject godotObject)
-            Services.Add(godotObject);
+        if (service is Node node)
+        {
+            node.Name = type.Name;
+            Services.Add(node);
+        }
     }
 
 
@@ -161,6 +161,7 @@ public static class AutoStartup
         }
 
         types.AddRange(assembly.GetTypes().Where(type => type.IsSubclassOf(typeof(AutoGodotService))).ToList());
+        // types.AddRange(assembly.GetTypes().Where(type => type.IsSubclassOf(typeof(AutoGodotTimer))).ToList());
         return types;
     }
 }

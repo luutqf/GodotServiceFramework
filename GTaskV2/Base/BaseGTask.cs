@@ -1,6 +1,7 @@
 using GodotServiceFramework.GTaskV2.Model;
 using GodotServiceFramework.GTaskV2.Util;
 using GodotServiceFramework.Util;
+using SigmusV2.Script.utils;
 
 namespace GodotServiceFramework.GTaskV2;
 
@@ -16,59 +17,58 @@ namespace GodotServiceFramework.GTaskV2;
 ///
 /// 对于测试开发,任务的流程原则上是固定的, 如各种靶场用例. 也有不固定的, 比如安装sophon, 任务会检测是否已完成前置
 /// </summary>
-public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
+public abstract class BaseGTask(GTaskModel model, GTaskFlow flow) : IGTask
 {
+    public long SingleId { get; } = SnowflakeIdGenerator.NextId();
+
     public virtual string Name => GetType().Name;
 
-    public event Action OnComplete = delegate { };
-    public event Action OnError = delegate { };
+    public event Action? OnComplete;
 
-    public GTaskFlow? Flow { get; set; }
+    public GTaskFlow Flow = flow;
 
     // 失败重试
     protected virtual bool Retry { get; set; } = false;
 
-    private int _progress;
-
     public int Progress
     {
-        get => _progress;
+        get;
         set
         {
             //如果传入的值和实际值相等,则忽略
-            if (value == _progress)
+            if (value == field)
             {
                 return;
             }
 
 
-            switch (_progress)
+            switch (field)
             {
                 //结束后台任务
                 case TaskBackground when value == 100:
+                    field = TaskComplete;
                     Complete();
-                    OnComplete.Invoke();
                     Destroy();
                     return;
                 //任务处于后台运行状态, 可以结束. 不再处理后续任务
                 case TaskBackground when value >= TaskComplete:
-                    _progress = value;
-                    Log.Warn("????");
+                    field = value;
+                    this.Warn("????");
                     Destroy();
                     break;
 
                 case TaskBackground when value < 0:
-                    Log.Warn("后台任务错误");
+                    this.Warn("后台任务错误");
                     break;
                 case < 0 or > 100:
-                    Log.Warn($"任务进度无法修改为{value}");
+                    this.Warn($"任务进度无法修改为{value}");
 
                     return;
             }
 
-            _progress = value;
-            this.PutHistory(value);
+            field = value;
 
+            this.UpdateProgress();
             ProgressHandle(value);
         }
     }
@@ -88,8 +88,6 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
 
             case TaskStart:
             {
-                // Context.RunningTasks.Add(this);
-                // Context.TasksMessage[Id]
                 break;
             }
 
@@ -99,7 +97,7 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
 
                 Destroy();
                 StartNext();
-                OnComplete.Invoke();
+                Complete();
                 break;
             }
 
@@ -111,9 +109,8 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
 
             case TaskError:
             {
-                Log.Warn($"❌ {this.GetTitle()} error");
-                OnError.Invoke();
-                Context.TaskStatus = TaskStatus.Error;
+                this.Warn($"❌ {this.GetTitle()} error");
+                Context.SendMessage(this, this.GetTitle(), ActionType.Error);
                 Destroy();
                 break;
             }
@@ -153,9 +150,9 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
 
     public GTaskModel Model { get; set; } = model;
 
-    public readonly List<BaseGTask> NextTasks = [];
+    public List<BaseGTask> NextTasks = [];
 
-    public GTaskContext Context { get; set; } = context;
+    public GTaskContext Context => Flow.Context;
 
     public string Id => Model.Id;
 
@@ -164,22 +161,19 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
     {
     }
 
-    // public virtual void OnError()
-    // {
-    // }
 
     protected virtual bool PreCheck()
     {
         switch (Context.TaskStatus)
         {
             case TaskStatus.Error:
-                Log.Warn("任务处于错误状态,禁止启动");
+                this.Warn("任务处于错误状态,禁止启动");
                 return false;
             case TaskStatus.Pause or TaskStatus.Stop:
-                Log.Warn("任务处于暂停或停止状态");
+                this.Warn("任务处于暂停或停止状态");
                 return false;
             case TaskStatus.Complete:
-                Log.Warn("任务已完成");
+                this.Warn("任务已完成了");
                 return false;
         }
 
@@ -196,14 +190,13 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
     /// <returns></returns>
     public async Task<bool> Start()
     {
+        TaskCounter.Increment();
         if (!PreCheck())
         {
             return false;
         }
 
         BeforeStart();
-
-        // Context.TasksHistory.Add(Model);
 
         try
         {
@@ -247,7 +240,7 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
         catch (Exception e)
         {
             Progress = TaskError;
-            Log.Error(e);
+            this.Error(e);
             throw;
         }
     }
@@ -286,7 +279,7 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
 
     protected virtual void Complete()
     {
-        Progress = 100;
+        OnComplete?.Invoke();
     }
 
 
@@ -305,15 +298,15 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
             }
         }
 
-        // Context.RunningTasks.Remove(this);
-        // OnComplete = delegate { };
+        NextTasks.Clear();
+        NextTasks = [];
+        Parameters.Clear();
+        Parameters = [];
 
-
-        // if (Id == Context.LastTaskId)
-        // {
-        //     Log.Info("任务上下文终结, 释放资源?");
-        //     Context.Dispose();
-        // }
+        // Flow = null;
+        TaskCounter.Decrement();
+        OnComplete = null;
+        Context.SendMessage(this, string.Empty, ActionType.Destroy);
     }
 
 
@@ -341,5 +334,4 @@ public abstract class BaseGTask(GTaskModel model, GTaskContext context) : IGTask
     public const int CompleteLine = 300;
 
     public const int TaskBackground = 301;
-    // public const int Task = 301;
 }

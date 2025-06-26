@@ -24,7 +24,7 @@ public static class Log
         }
     }
 
-    public static void Warn(object message, BbColor color = BbColor.Gray)
+    public static void Warn(object message, BbColor color = BbColor.Orange)
     {
         if (MyLogger.Instance != null)
         {
@@ -36,7 +36,7 @@ public static class Log
         }
     }
 
-    public static void Error(object message, BbColor color = BbColor.Gray)
+    public static void Error(object message, BbColor color = BbColor.Red)
     {
         if (MyLogger.Instance != null)
         {
@@ -50,6 +50,5 @@ public static class Log
 
     public static void Scene(string name, object args)
     {
-        
     }
 }

@@ -98,7 +98,6 @@ public partial class XTimer : Node
     public void Start()
     {
         CallDeferred(Node.MethodName.SetPhysicsProcess, true);
-        // SetPhysicsProcess(true);
     }
 
     /// <summary>

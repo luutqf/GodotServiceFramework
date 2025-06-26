@@ -22,8 +22,7 @@ public static class GTaskExtensions
             NextIds = [],
             Parameters = paramsDict,
         };
-        var baseGTask = factory.CreateTask(model, @this.Context);
-        baseGTask.Flow = @this.Flow;
+        var baseGTask = factory.CreateTask(model, @this.Flow);
         _ = baseGTask.Start();
         return baseGTask;
     }
@@ -61,7 +60,7 @@ public static class GTaskExtensions
             @this.NextTasks.Clear();
         }
 
-        @this.NextTasks.AddRange(taskFlow.Context.GetStartTasks(taskFlow.Name));
+        @this.NextTasks.AddRange(taskFlow.StartTasks);
     }
 
     /// <summary>
@@ -81,7 +80,7 @@ public static class GTaskExtensions
             NextIds = [],
             Parameters = paramsDict,
         };
-        var task = factory.CreateTask(model, @this.Context);
+        var task = factory.CreateTask(model, @this.Flow);
 
 
         if (replace)
@@ -103,11 +102,11 @@ public static class GTaskExtensions
         return string.Empty;
     }
 
-    public static bool TryGet(this BaseGTask @this, string name, out object? value)
+    public static bool TryGetArg(this BaseGTask @this, string name, out object? value)
     {
         try
         {
-            value = @this.Get(name);
+            value = @this.GetArg(name);
             return true;
         }
         catch (Exception)
@@ -124,7 +123,7 @@ public static class GTaskExtensions
     /// <param name="name"></param>
     /// <param name="defaultValue"></param>
     /// <returns></returns>
-    public static object Get(this BaseGTask @this, string name, object? defaultValue = null)
+    public static object GetArg(this BaseGTask @this, string name, object? defaultValue = null)
     {
         if (@this.Parameters.TryGetValue(name, out var value))
         {
@@ -163,34 +162,20 @@ public static class GTaskExtensions
     /// model数组转换为任务数组
     /// </summary>
     /// <param name="this"></param>
-    /// <param name="context"></param>
+    /// <param name="flow"></param>
     /// <param name="entityFirstNodeId"></param>
     /// <returns></returns>
-    public static List<BaseGTask> ToStartGTask(this GTaskModel[] @this, GTaskContext? context = null,
+    public static List<BaseGTask> ModelToStartGTask(this GTaskModel[] @this, GTaskFlow flow,
         string entityFirstNodeId = "")
     {
-        //过滤掉没有链表关系的任务
-        //TODO 后续会尝试保留后台任务
-        // var counts = new Dictionary<long, int>();
-        // foreach (var model in @this)
-        // {
-        //     foreach (var nextId in model.NextIds)
-        //     {
-        //         counts[nextId] = counts.TryGetValue(nextId, out var count) ? count + 1 : 1;
-        //     }
-        // }
-
-
         List<BaseGTask> gTasks = [];
 
         foreach (var t in @this)
         {
-            // if (!counts.TryGetValue(t.Id, out var count) && t.Id != entityFirstNodeId) continue;
+            //TODO 这里默认只留下了第一个, 实际上还可以有其他后台任务
             if (t.Id != entityFirstNodeId) continue;
 
-            context ??= GTaskContext.Empty;
-
-            gTasks.Add(Services.Get<GTaskFactory>()!.CreateTask(t, context));
+            gTasks.Add(Services.Get<GTaskFactory>()!.CreateTask(t, flow));
         }
 
 
@@ -201,12 +186,11 @@ public static class GTaskExtensions
     /// model转换为任务
     /// </summary>
     /// <param name="this"></param>
-    /// <param name="context"></param>
+    /// <param name="flow"></param>
     /// <returns></returns>
-    public static BaseGTask ToStartGTask(this GTaskModel @this, GTaskContext? context = null)
+    public static BaseGTask ModelToStartGTask(this GTaskModel @this, GTaskFlow flow)
     {
-        context ??= GTaskContext.Empty;
-        return Services.Get<GTaskFactory>()!.CreateTask(@this, context);
+        return Services.Get<GTaskFactory>()!.CreateTask(@this, flow);
     }
 
     /// <summary>
@@ -222,14 +206,12 @@ public static class GTaskExtensions
             var factory = Services.Get<GTaskFactory>()!;
             foreach (var model in @this.Model.NextModels)
             {
-                var task = factory.CreateTask(model, @this.Context);
-                task.Flow = @this.Flow;
+                var task = factory.CreateTask(model, @this.Flow);
                 @this.NextTasks.Add(task);
             }
         }
 
-        if (@this.Flow == null) return @this.NextTasks;
-        var flow = @this.Context.GetStartTasks(@this.Flow.Name);
+        var flow = @this.Flow.StartTasks;
         flow.AddRange(@this.NextTasks);
 
 
@@ -237,41 +219,47 @@ public static class GTaskExtensions
     }
 
 
-    public static void PutHistory(this BaseGTask @this, int value)
-    {
-        if (@this.Flow == null)
-        {
-            Log.Warn($"{@this.GetTitle()} 缺失flowName");
-            return;
-        }
-
-        if (!@this.Context.FlowHistory.TryGetValue(@this.Flow.Name!, out var progress))
-        {
-            progress = [];
-            @this.Context.FlowHistory[@this.Flow.Name!] = progress;
-        }
-
-        progress[@this.GetTitle()] = value;
-    }
-
     public static void PutMessage(this BaseGTask @this, string message)
     {
-        if (@this.Flow == null)
-        {
-            Log.Warn($"{@this.GetTitle()} 缺失flowName");
-            return;
-        }
-
-        if (!@this.Context.FlowMessage.TryGetValue(@this.Flow.Name!, out var progress))
+        if (!@this.Context.FlowMessage.TryGetValue(@this.Flow.Name, out var progress))
         {
             progress = [];
-            @this.Context.FlowMessage[@this.Flow.Name!] = progress;
+            @this.Context.FlowMessage[@this.Flow.Name] = progress;
         }
 
         progress.Add(message);
     }
-    
-    
+
+    public static void Info(this BaseGTask @this, string message, BbColor color = BbColor.Gray)
+    {
+        Log.Info(message, color);
+        @this.Context.SendMessage(@this, message);
+    }
+    // public static void Debug(this BaseGTask @this, string message, BbColor color = BbColor.Gray)
+    // {
+    //     Log.Debug(message, color);
+    //     // @this.Context.SendMessage(@this, message, color);
+    // }
+
+    public static void Error(this BaseGTask @this, object message)
+    {
+        Log.Error(message);
+        @this.Context.SendMessage(@this, message.ToString()!, ActionType.Error);
+    }
+
+    public static void Warn(this BaseGTask @this, string message)
+    {
+        Log.Warn(message);
+        @this.Context.SendMessage(@this, message, ActionType.Warn);
+    }
+
+
+    public static void UpdateProgress(this BaseGTask @this)
+    {
+        @this.Context.UpdateProgress(@this);
+    }
+
+
     public static string GetTitle(this BaseGTask @this)
     {
         return @this.Parameters.TryGetValue("title", out var title) ? title.ToString()! : @this.Name;

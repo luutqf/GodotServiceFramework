@@ -85,7 +85,19 @@ public partial class SceneStatsManager : AutoGodotService
     public PackedScene LoadScene(string path, int index = 0)
     {
         var packedScene = GD.Load<PackedScene>(path);
+
         var name = packedScene._Bundled["names"].As<Array<string>>()[index];
+
+        name = name.ToLower();
+        _packedScenes.TryAdd(name, packedScene);
+        return packedScene;
+    }
+
+    public PackedScene LoadScene(string path, string name)
+    {
+        var packedScene = GD.Load<PackedScene>(path);
+
+        // var name = packedScene._Bundled["names"].As<Array<string>>()[index];
 
         name = name.ToLower();
         _packedScenes.TryAdd(name, packedScene);
@@ -158,7 +170,7 @@ public partial class SceneStatsManager : AutoGodotService
     {
         var instantiate = _packedScenes.TryGetValue(name.ToLower(), out var packedScene)
             ? packedScene.Instantiate()
-            : throw new Exception("???");
+            : throw new Exception($"??? {name}");
 
         SwitchBindData(args, instantiate, readyCallBack);
 
@@ -467,6 +479,4 @@ public partial class SceneStatsManager : AutoGodotService
         lastTime = 0;
         return null;
     }
-
-
 }

@@ -18,9 +18,6 @@ public partial class GameTaskService : AutoGodotService
     }
 
 
-
-
-
     public bool CreateGameTaskEntity(GameTaskEntity gameTaskEntity)
     {
         return _db.InsertItem(gameTaskEntity);

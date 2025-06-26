@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using GodotServiceFramework.Binding;
 using GodotServiceFramework.Data;
@@ -11,9 +12,10 @@ namespace GodotServiceFramework.Binding;
 /// </summary>
 public static class DataStore
 {
-    private static Dictionary<Type, Dictionary<int, IBinding>> Store { get; set; } = new();
+    private static ConcurrentDictionary<Type, Dictionary<int, IBinding>> Store { get; set; } = new();
 
-    private static Dictionary<Type, Dictionary<int, Dictionary<object, object>>> Properties { get; set; } = [];
+    private static ConcurrentDictionary<Type, Dictionary<int, Dictionary<object, object?>>> Properties { get; set; } =
+        [];
 
     public static T? Get<T>(int id) where T : IBinding
     {
@@ -118,7 +120,7 @@ public static class DataStore
     }
 
 
-    public static void SetProperty<T>(this T @this, string key, object v) where T : IBinding
+    public static void SetProperty<T>(this T @this, string key, object? v) where T : IBinding
     {
         var type = @this.GetType();
         if (!Properties.TryGetValue(type, out var properties))

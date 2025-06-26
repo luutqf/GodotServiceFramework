@@ -8,13 +8,13 @@ public partial class TextLineControl : VBoxContainer
 {
     [ChildNode("TextLine")] private MyRichTextLabel? _textLine;
 
-    [ChildNode("ButtonBox")] private HBoxContainer? _buttonBox;
+    // [ChildNode("ButtonBox")] private HBoxContainer? _buttonBox;
 
     [ChildNode("VBox")] private VBoxContainer? _vBox;
 
     [ChildNode("Avatar")] private TextureRect? _avatar;
 
-    [ChildNode("ButtonScrollContainer")] private ScrollContainer? _buttonScrollContainer;
+    // [ChildNode("ButtonScrollContainer")] private ScrollContainer? _buttonScrollContainer;
 
 
     [Autowired]
@@ -40,7 +40,7 @@ public partial class TextLineControl : VBoxContainer
     {
         // var array = args.AsGodotArray<Dictionary>();
         _textLine!.SetText(message.Text, message.Speed, message.AutoClear, message.ClearDelay);
-        _buttonBox!.RemoveAllChild();
+        // _buttonBox!.RemoveAllChild();
         _avatar!.SetCustomMinimumSize(Vector2.Zero);
 
 
@@ -49,20 +49,20 @@ public partial class TextLineControl : VBoxContainer
         //     Text = tuple["show"].AsString(),
         // }));
 
-        if (_buttonBox!.GetChildren().Count > 0)
-        {
-            _buttonScrollContainer!.Visible = true;
-            _buttonScrollContainer.CustomMinimumSize = new Vector2(0, 32);
-        }
-        else
-        {
-            _buttonScrollContainer!.Visible = false;
-            _buttonScrollContainer.CustomMinimumSize = Vector2.Zero;
-
-            _buttonScrollContainer.SetSize(Vector2.Zero);
-            SetCustomMinimumSize(new Vector2(0, 20));
-            // SetSize(_textLine.Size);
-        }
+        // if (_buttonBox!.GetChildren().Count > 0)
+        // {
+        //     _buttonScrollContainer!.Visible = true;
+        //     _buttonScrollContainer.CustomMinimumSize = new Vector2(0, 32);
+        // }
+        // else
+        // {
+        //     _buttonScrollContainer!.Visible = false;
+        //     _buttonScrollContainer.CustomMinimumSize = Vector2.Zero;
+        //
+        //     _buttonScrollContainer.SetSize(Vector2.Zero);
+        //     SetCustomMinimumSize(new Vector2(0, 20));
+        //     // SetSize(_textLine.Size);
+        // }
     }
 
     public void SetCharacter(string name)
@@ -75,5 +75,6 @@ public partial class TextLineControl : VBoxContainer
     public void Close()
     {
         GetParent().RemoveChild(this);
+        CallDeferred(Node.MethodName.QueueFree);
     }
 }

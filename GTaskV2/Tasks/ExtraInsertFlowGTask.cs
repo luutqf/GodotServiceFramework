@@ -10,13 +10,12 @@ namespace GodotServiceFramework.GTaskV2.Tasks;
 /// 启动一个额外的工作流, 工作流必须在数据库中存在
 /// </summary>
 /// <param name="model"></param>
-/// <param name="context"></param>
-public class ExtraInsertFlowGTask(GTaskModel model, GTaskContext context) : BaseGTask(model, context)
+public class ExtraInsertFlowGTask(GTaskModel model, GTaskFlow flow) : BaseGTask(model, flow)
 {
     protected override Task<int> Run()
     {
         this.GetNextTasks();
-        var name = this.Get("name").ToString()!;
+        var name = this.GetArg("name").ToString()!;
         Log.Info("向后插入额外工作流: " + name);
 
         var flowEntity = Services.Get<GTaskEntityService>()!.GetFlowEntity(name);

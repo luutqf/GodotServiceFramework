@@ -121,4 +121,10 @@ public partial class MessageBox : VBoxContainer
         _textLines[message.MessageId] = line;
         line.SetMeta("message", message.MessageId);
     }
+
+    public void Clear()
+    {
+        _textLines.Clear();
+        this.RemoveAllChildDeferred();
+    }
 }

@@ -12,15 +12,15 @@ namespace GodotServiceFramework.GTaskV2;
 /// <summary>
 /// 这是一个任务流, 内含一个任务树, 以链表的形式,初始化后只保留跟节点.
 /// </summary>
-public class GTaskFlow(GTaskContext? context)
+public class GTaskFlow(GTaskContext context)
 {
     public string Name { get; private set; } = SnowflakeIdGenerator.NextUId().ToString();
 
-    public readonly GTaskContext Context = context ?? new GTaskContext();
-
-    public BaseGTask? FirstTask { get; private set; }
+    public readonly GTaskContext Context = context;
 
     public BaseGTask? GTaskGraveyard { get; private set; }
+
+    public List<BaseGTask> StartTasks { get; private set; } = [];
 
     /// <summary>
     /// 我们仍以flow作为入口
@@ -28,7 +28,8 @@ public class GTaskFlow(GTaskContext? context)
     public void Start()
     {
         Log.Info($"{Name} Started ContextId: {Context.Id}");
-        foreach (var task in Context.GetStartTasks(Name))
+
+        foreach (var task in StartTasks)
         {
             Task.Run(() => task.Start());
         }
@@ -39,6 +40,8 @@ public class GTaskFlow(GTaskContext? context)
 
     public void Stop()
     {
+        StartTasks.Clear();
+        // Context.Dispose();
     }
 
     public void Pause()
@@ -52,10 +55,9 @@ public class GTaskFlow(GTaskContext? context)
     public void Initialize(GTaskFlowEntity entity)
     {
         Name = entity.Name;
-        var gTasks = entity.Models.ToStartGTask(context, entity.FirstNodeId);
+        var gTasks = entity.Models.ModelToStartGTask(this, entity.FirstNodeId);
 
-        FirstTask = gTasks.First(task => task.Id == entity.FirstNodeId);
-        FirstTask.Context.AddStartTask(Name, gTasks);
+        AddStartTask(gTasks);
 
         foreach (var baseGTask in gTasks)
         {
@@ -73,8 +75,13 @@ public class GTaskFlow(GTaskContext? context)
                 ["flowName"] = Name,
             },
         };
-        GTaskGraveyard = factory.CreateTask(model, FirstTask.Context);
+        GTaskGraveyard = factory.CreateTask(model, this);
         GTaskGraveyard.Flow = this;
-        FirstTask.Context.CommonParameters.AddRange(entity.Parameters);
+        Context.CommonParameters.AddRange(entity.Parameters);
+    }
+
+    private void AddStartTask(List<BaseGTask> gTasks)
+    {
+        StartTasks = gTasks;
     }
 }

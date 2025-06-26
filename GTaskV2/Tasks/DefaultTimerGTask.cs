@@ -5,11 +5,11 @@ using GodotServiceFramework.Util;
 
 namespace GodotServiceFramework.GTaskV2.Tasks;
 
-public class DefaultTimerGTask(GTaskModel model, GTaskContext context) : BaseTimerGTask(model, context)
+public class DefaultTimerGTask(GTaskModel model, GTaskFlow flow) : BaseTimerGTask(model, flow)
 {
     public override void BeforeStart()
     {
-        if (this.Get("background") is bool background)
+        if (this.GetArg("background") is bool background)
         {
             if (background)
             {
@@ -24,7 +24,7 @@ public class DefaultTimerGTask(GTaskModel model, GTaskContext context) : BaseTim
     protected override Task OnTimeout()
     {
         this.InsertAndRun(nameof(MessageGTask),
-            new Dictionary<string, object> { ["content"] = this.Get("content") + "123" });
+            new Dictionary<string, object> { ["content"] = this.GetArg("content") + "123" });
         return Task.CompletedTask;
     }
 

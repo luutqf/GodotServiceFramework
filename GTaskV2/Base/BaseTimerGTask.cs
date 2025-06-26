@@ -1,6 +1,9 @@
+using GodotServiceFramework.Context.Service;
+using GodotServiceFramework.Extensions;
 using GodotServiceFramework.GTaskV2.Model;
 using GodotServiceFramework.GTaskV2.Util;
 using GodotServiceFramework.Util;
+using SigmusV2.GodotServiceFramework.GTaskV2;
 using Timer = System.Threading.Timer;
 
 namespace GodotServiceFramework.GTaskV2.Base;
@@ -9,12 +12,11 @@ namespace GodotServiceFramework.GTaskV2.Base;
 /// 后台任务一定是定时任务, 需要定时检查是否终止
 /// </summary>
 /// <param name="model"></param>
-/// <param name="context"></param>
-public abstract class BaseTimerGTask(GTaskModel model, GTaskContext context) : BaseGTask(model, context)
+public abstract class BaseTimerGTask(GTaskModel model, GTaskFlow flow) : BaseGTask(model, flow)
 {
     protected object LockObject { get; } = new();
 
-    private Timer? _timer;
+    // private Timer? _timer;
     protected virtual int Delay { get; set; } = 1;
 
     protected virtual bool AutoFail { get; set; } = true;
@@ -57,27 +59,24 @@ public abstract class BaseTimerGTask(GTaskModel model, GTaskContext context) : B
         }
     }
 
-    protected override async Task<int> Run()
+    protected override Task<int> Run()
     {
         // 第一个参数是回调方法，第二个是状态对象，第三个是启动延迟时间，第四个是间隔时间
-        _timer = new Timer(
-            callback: TimerTask!,
-            state: null,
-            dueTime: Delay * 1000,
-            period: Delay * 1000);
-        return 10;
+        var timer = Services.Get<GTaskTimer>()!;
+        var actionModel = new GTaskActionModel
+        {
+            Id = SingleId,
+            Name = this.GetTitle(),
+            Delay = Delay,
+            Callback = TimerTask
+        };
+        timer.AddTimerAction(actionModel);
+        return Task.FromResult(10);
     }
 
 
-    private void TimerTask(object state)
+    private void TimerTask()
     {
-        // if (!Monitor.TryEnter(LockObject))
-        // {
-        //     return;
-        // }
-        
-        
-
         if (_running) return;
         _running = true;
 
@@ -95,7 +94,8 @@ public abstract class BaseTimerGTask(GTaskModel model, GTaskContext context) : B
             {
                 if (CurrentCount >= Count)
                 {
-                    _timer?.Dispose();
+                    // _timer?.Dispose();
+                    Services.Get<GTaskTimer>()!.StopTimerAction(SingleId);
                     if (AutoFail)
                     {
                         Log.Warn($"{this.GetTitle()} 次数超限");
@@ -125,9 +125,9 @@ public abstract class BaseTimerGTask(GTaskModel model, GTaskContext context) : B
 
     protected override void Complete()
     {
+        base.Complete();
         Progress = 100;
-        _timer?.Dispose();
+        // _timer?.Dispose();
+        Services.Get<GTaskTimer>()!.StopTimerAction(SingleId);
     }
-    
-    
 }

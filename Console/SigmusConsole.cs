@@ -29,6 +29,12 @@ public partial class SigmusConsole : Control
 
     public void MessageHandler(string text)
     {
+        if (text.Equals("clear"))
+        {
+            Clear();
+            return;
+        }
+
         _history.Enqueue(text);
 
         //2. 检查是否是别名
@@ -68,6 +74,11 @@ public partial class SigmusConsole : Control
                 Text = text,
             });
         }
+    }
+
+    public void Clear()
+    {
+        _messageBox?.Clear();
     }
 
 

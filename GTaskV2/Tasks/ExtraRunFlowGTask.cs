@@ -11,14 +11,13 @@ namespace GodotServiceFramework.GTaskV2.Tasks;
 /// 启动一个额外的工作流, 工作流必须在数据库中存在
 /// </summary>
 /// <param name="model"></param>
-/// <param name="context"></param>
-public class ExtraRunFlowGTask(GTaskModel model, GTaskContext context) : BaseGTask(model, context)
+public class ExtraRunFlowGTask(GTaskModel model, GTaskFlow flow) : BaseGTask(model, flow)
 {
     private readonly Dictionary<string, int> _flowsProgress = [];
 
     protected override Task<int> Run()
     {
-        if (this.TryGet("names", out var value))
+        if (this.TryGetArg("names", out var value))
         {
             var array = (JArray)value!;
             foreach (var jToken in array)
@@ -27,7 +26,7 @@ public class ExtraRunFlowGTask(GTaskModel model, GTaskContext context) : BaseGTa
             }
         }
 
-        if (this.TryGet("name", out value))
+        if (this.TryGetArg("name", out value))
         {
             _flowsProgress[value!.ToString()!] = 0;
         }
