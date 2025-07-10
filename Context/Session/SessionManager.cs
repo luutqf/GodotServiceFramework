@@ -7,7 +7,8 @@ namespace GodotServiceFramework.Context.Session;
 /// <summary>
 /// 用于管理session节点
 /// </summary>
-public partial class SessionManager : AutoGodotService
+[InjectService]
+public partial class SessionManager : IDisposable
 {
     public static readonly Dictionary<ulong, ulong> SessionIdMap = [];
 
@@ -19,7 +20,7 @@ public partial class SessionManager : AutoGodotService
     };
 
 
-    public override void _ExitTree()
+    public void Dispose()
     {
         SessionIdMap.Clear();
     }

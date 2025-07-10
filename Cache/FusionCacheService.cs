@@ -6,7 +6,8 @@ namespace GodotServiceFramework.Cache;
 /// <summary>
 /// 
 /// </summary>
-public partial class FusionCacheService : AutoGodotService
+[InjectService]
+public partial class FusionCacheService : IDisposable
 {
     public readonly FusionCache Instance;
 
@@ -32,7 +33,8 @@ public partial class FusionCacheService : AutoGodotService
     // {
     //     Instance?.Dispose();
     // }
-    public override void _ExitTree()
+
+    public void Dispose()
     {
         Instance.Dispose();
     }

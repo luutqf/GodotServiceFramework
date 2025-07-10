@@ -3,7 +3,6 @@ using Godot;
 using GodotServiceFramework.Binding;
 using GodotServiceFramework.Context.Service;
 using GodotServiceFramework.Exceptions;
-using AutoGodotService = GodotServiceFramework.Context.Service.AutoGodotService;
 
 namespace GodotServiceFramework.Util;
 
@@ -321,10 +320,11 @@ public static class NodeUtils
             break;
         }
 
-        if (parameterInfos.Any(info => !info.ParameterType.IsSubclassOf(typeof(AutoGodotService))))
-        {
-            throw new TypeNotFoundException(type.Name);
-        }
+        //TODO 依赖注入
+        // if (parameterInfos.Any(info => !info.ParameterType.IsSubclassOf(typeof(AutoGodotService))))
+        // {
+        //     throw new TypeNotFoundException(type.Name);
+        // }
 
         List<object> paramList = [];
         paramList.AddRange(parameterInfos.Select(parameterInfo => Services.Get(parameterInfo.ParameterType))!);

@@ -6,12 +6,14 @@ using GodotServiceFramework.Context.Session;
 using GodotServiceFramework.Data;
 using GodotServiceFramework.Extensions;
 using GodotServiceFramework.Util;
-using AutoGodotService = GodotServiceFramework.Context.Service.AutoGodotService;
+
+// using AutoGodotService = GodotServiceFramework.Context.Service.AutoGodotService;
 
 namespace GodotServiceFramework.Nodes;
 
 // [AutoGlobalService]
-public partial class SceneStatsManager : AutoGodotService
+[InjectService]
+public partial class SceneStatsManager : Node
 {
     //当前焦点所在的节点
     private readonly System.Collections.Generic.Dictionary<Type, Node?> _currentFocusDict = [];

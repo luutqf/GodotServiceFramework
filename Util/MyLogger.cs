@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Godot;
 using GodotServiceFramework.Context.Service;
-using AutoGodotService = GodotServiceFramework.Context.Service.AutoGodotService;
 
 namespace GodotServiceFramework.Util;
 
@@ -15,7 +14,8 @@ namespace GodotServiceFramework.Util;
  */
 // [AutoGlobalService]
 [Order(-2000)]
-public partial class MyLogger : AutoGodotService
+[InjectService]
+public partial class MyLogger : Node
 {
     public event Action<string?, BbColor> MessageLogged = delegate { };
 
@@ -242,7 +242,7 @@ public partial class MyLogger : AutoGodotService
     void PrintErr(object? v, BbColor color)
     {
         //Console.ForegroundColor = color;
-        GD.PrintErr(v);
+        // GD.PrintErr(v);
         GD.PushError(v);
     }
 
@@ -250,8 +250,6 @@ public partial class MyLogger : AutoGodotService
     {
         Instance = this;
     }
-
-
 }
 
 public class LogInfo

@@ -12,7 +12,7 @@ public static class Log
         }
         else
         {
-            GD.Print(message);
+            Console.WriteLine(message);
         }
     }
 
@@ -44,7 +44,7 @@ public static class Log
         }
         else
         {
-            GD.PrintErr(message);
+            Console.Error.WriteLine(message);
         }
     }
 

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Godot;
 using GodotServiceFramework.Util;
 
@@ -5,20 +6,27 @@ namespace GodotServiceFramework.Context.Service;
 
 public static class Services
 {
-    private static readonly List<string> RegisterNames = [];
+    private static readonly ConcurrentDictionary<string, object> ServiceDict = [];
+
+    // private static readonly List<string> RegisterNames = [];
+
+
+    public static ICollection<string> ServiceNames => ServiceDict.Keys;
 
     public static bool Has(string name)
     {
-        return Engine.HasSingleton(name);
+        // return Engine.HasSingleton(name);
+        return ServiceDict.ContainsKey(name);
     }
 
     public static bool Has(Type type)
     {
-        return Engine.HasSingleton(type.Name);
+        // return Engine.HasSingleton(type.Name);
+        return ServiceDict.ContainsKey(type.Name);
     }
 
 
-    public static void Add(GodotObject obj)
+    public static void Add(object obj)
     {
         Add(obj.GetType().Name, obj);
     }
@@ -28,17 +36,18 @@ public static class Services
     /// </summary>
     /// <param name="name"></param>
     /// <param name="obj"></param>
-    public static void Add(string name, GodotObject obj)
+    public static void Add(string name, object obj)
     {
-        if (Engine.HasSingleton(name))
+        if (Has(name))
         {
             GD.PushWarning($"Duplicate singleton: {name}");
             return;
         }
 
-        RegisterNames.Add(name);
+        // RegisterNames.Add(name);
 
-        Engine.RegisterSingleton(name, obj);
+        ServiceDict[name] = obj;
+        // Engine.RegisterSingleton(name, obj);
 
         Task.Run(async () =>
         {
@@ -51,7 +60,7 @@ public static class Services
                         await Task.Delay(1000);
                         continue;
                     }
-                    
+
                     GetSceneTree()?.Root.CallDeferred(Node.MethodName.AddChild, node);
                     break;
                 }
@@ -59,7 +68,7 @@ public static class Services
         });
     }
 
-    
+
     /// <summary>
     /// 尝试通过泛型获取service
     /// </summary>
@@ -82,7 +91,7 @@ public static class Services
         }
     }
 
-    public static T? Get<T>() where T : GodotObject
+    public static T? Get<T>() where T : class
     {
         return Get<T>(typeof(T).Name) ?? null;
     }
@@ -93,11 +102,14 @@ public static class Services
     /// <param name="name"></param>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
-    public static T? Get<T>(string name) where T : GodotObject
+    public static T? Get<T>(string name) where T : class
     {
-        if (!Engine.HasSingleton(name)) return null;
+        if (!Has(name))
+        {
+            return null;
+        }
 
-        return Engine.GetSingleton(name) as T;
+        return ServiceDict[name] as T;
     }
 
     /// <summary>
@@ -118,16 +130,17 @@ public static class Services
     {
         if (!Has(name)) return;
 
-        var obj = Get<GodotObject>(name);
+        // var obj = Get<GodotObject>(name);
 
-        Engine.UnregisterSingleton(name);
+        // Engine.UnregisterSingleton(name);
 
+        ServiceDict.Remove(name, out var obj);
         if (obj is Node node && node.GetParent() != null)
         {
             node.GetParent().CallDeferred(Node.MethodName.RemoveChild, node);
         }
 
-        RegisterNames.Remove(name);
+        // RegisterNames.Remove(name);
     }
 
     /// <summary>
@@ -153,10 +166,26 @@ public static class Services
     /// </summary>
     public static void Destroy()
     {
-        foreach (var name in RegisterNames.ToArray().Where(Has))
+        // foreach (var name in RegisterNames.ToArray().Where(Has))
+        // {
+        //     Remove(name);
+        // }
+        foreach (var pair in ServiceDict)
         {
-            Remove(name);
+            if (pair.Value is Node node)
+            {
+                if (node.GetParent() != null)
+                    node.GetParent().CallDeferred(Node.MethodName.RemoveChild, node);
+                node.CallDeferred(Node.MethodName.QueueFree);
+            }
+
+            if (pair.Value is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
         }
+
+        ServiceDict.Clear();
     }
 
 

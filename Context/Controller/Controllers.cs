@@ -1,4 +1,5 @@
 using System.Reflection;
+using Godot;
 using GodotServiceFramework.Context.Service;
 using GodotServiceFramework.Extensions;
 using GodotServiceFramework.Util;
@@ -39,19 +40,20 @@ public class RequestMappingAttribute(string name = "", string method = "GET", st
 }
 
 [Order(-999)]
-public partial class Controllers : Service.AutoGodotService
+[InjectService]
+public partial class Controllers : Node
 {
     private static Controllers? Instance { get; set; }
 
-    private readonly System.Collections.Generic.Dictionary<string, Type> _controllerTypes = [];
+    private readonly Dictionary<string, Type> _controllerTypes = [];
 
     private readonly
-        System.Collections.Generic.Dictionary<string,
-            System.Collections.Generic.Dictionary<(string m, string r), (Delegate d, UriTemplate u)>> _mappings = [];
+        Dictionary<string,
+            Dictionary<(string m, string r), (Delegate d, UriTemplate u)>> _mappings = [];
 
-    private readonly System.Collections.Generic.Dictionary<string, Delegate> _aliasesMappings = [];
+    private readonly Dictionary<string, Delegate> _aliasesMappings = [];
 
-    private readonly System.Collections.Generic.Dictionary<string, List<string>> _aliasesControllerMappings = [];
+    private readonly Dictionary<string, List<string>> _aliasesControllerMappings = [];
 
     /// <summary>
     /// 注册一些

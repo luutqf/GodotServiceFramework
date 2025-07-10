@@ -116,6 +116,19 @@ public static class GTaskExtensions
         }
     }
 
+
+    public static object? GetArgOrDefault(this BaseGTask @this, string name, object? defaultValue = null)
+    {
+        try
+        {
+            return @this.GetArg(name);
+        }
+        catch (Exception)
+        {
+            return defaultValue;
+        }
+    }
+
     /// <summary>
     /// 获取任务参数,如果任务内部没有, 则从上下文中获取
     /// </summary>
@@ -123,7 +136,7 @@ public static class GTaskExtensions
     /// <param name="name"></param>
     /// <param name="defaultValue"></param>
     /// <returns></returns>
-    public static object GetArg(this BaseGTask @this, string name, object? defaultValue = null)
+    public static object GetArg(this BaseGTask @this, string name)
     {
         if (@this.Parameters.TryGetValue(name, out var value))
         {
@@ -152,10 +165,10 @@ public static class GTaskExtensions
             return value;
         }
 
-        if (defaultValue == null)
-            throw new Exception($"Unknown common parameter: {name}");
+        // if (defaultValue == null)
+        throw new Exception($"Unknown common parameter: {name}");
 
-        return defaultValue;
+        // return defaultValue;
     }
 
     /// <summary>
@@ -234,6 +247,12 @@ public static class GTaskExtensions
     {
         Log.Info(message, color);
         @this.Context.SendMessage(@this, message);
+    }
+
+    public static void SuccessMsg(this BaseGTask @this, string message, BbColor color = BbColor.Gray)
+    {
+        Log.Info(message, color);
+        @this.Context.SendMessage(@this, message, ActionType.Success);
     }
     // public static void Debug(this BaseGTask @this, string message, BbColor color = BbColor.Gray)
     // {

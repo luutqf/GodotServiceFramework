@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Godot;
 using GodotServiceFramework.Context.Service;
 using GodotServiceFramework.Util;
 using Timer = Godot.Timer;
@@ -21,7 +22,8 @@ public class GTaskActionModel
 /// <summary>
 /// 这个Timer用于为所有正在运行的定时GTask,提供间隔性的调度
 /// </summary>
-public partial class GTaskTimer : AutoGodotService
+[InjectService]
+public partial class GTaskTimer : Node
 {
     //key 为task的objectId, action是task自己指定的
     private readonly ConcurrentDictionary<long, GTaskActionModel> _actions = [];

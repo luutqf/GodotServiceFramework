@@ -1,21 +1,24 @@
 using Godot;
-using GodotServiceFramework.Context;
 using GodotServiceFramework.Context.Service;
 using GodotServiceFramework.Db;
 using GodotServiceFramework.Util;
-using AutoGodotService = GodotServiceFramework.Context.Service.AutoGodotService;
+
+// using AutoGodotService = GodotServiceFramework.Context.Service.AutoGodotService;
 
 namespace GodotServiceFramework.Config;
 
 /// <summary>
-/// 全局配置管理器，支持多级配置源
+/// 改进的全局配置管理器，支持多级配置源和更好的类型安全
 /// 配置优先级：配置文件 > 环境变量（进程 > 用户 > 系统）
 /// </summary>
 [Order(-1000)]
-public partial class ConfigStore : AutoGodotService
+[InjectService]
+public partial class ConfigStore
 {
     private readonly YamlConfigManager _manager;
     private readonly string _configPath;
+    private readonly Dictionary<string, object> _defaultValues = new();
+    private readonly Dictionary<string, Type> _configTypes = new();
 
     private static ConfigStore? _instance;
 
@@ -25,7 +28,7 @@ public partial class ConfigStore : AutoGodotService
     {
         // 1. 从环境变量获取配置文件目录，如果无法获取，则使用默认路径
         var configDir = GetConfigDirectoryFromEnvironment();
-        _configPath = Path.Combine(configDir, "default.yaml");
+        _configPath = Path.Combine(configDir, "sigmus.yaml");
 
         FileUtils.CreateDirectoryWithCheck(ProjectSettings.GlobalizePath(configDir));
         _manager = new YamlConfigManager(_configPath);
@@ -67,23 +70,44 @@ public partial class ConfigStore : AutoGodotService
     }
 
     /// <summary>
-    /// 获取配置值，支持多级配置源
-    /// 优先级：配置文件 > 环境变量（进程 > 用户 > 系统）
+    /// 注册配置项，指定默认值和类型
     /// </summary>
     /// <typeparam name="T">配置值类型</typeparam>
     /// <param name="key">配置键</param>
     /// <param name="defaultValue">默认值</param>
-    /// <returns>配置值</returns>
-    public static T? Get<T>(object key, T? defaultValue = default)
+    /// <param name="description">配置项描述（可选）</param>
+    public static void Register<T>(object key, T defaultValue, string? description = null)
+    {
+        var keyStr = key.ToString()!;
+        _instance!._defaultValues[keyStr] = defaultValue!;
+        _instance._configTypes[keyStr] = typeof(T);
+
+        Log.Debug($"注册配置项 {keyStr}: 类型={typeof(T).Name}, 默认值={defaultValue}, 描述={description ?? "无"}");
+    }
+
+    /// <summary>
+    /// 获取配置值，如果不存在则返回注册的默认值
+    /// </summary>
+    /// <typeparam name="T">配置值类型</typeparam>
+    /// <param name="key">配置键</param>
+    /// <returns>配置值或默认值</returns>
+    public static T Get<T>(object key)
     {
         var keyStr = key.ToString()!;
 
         // 1. 优先从配置文件获取
-        var configValue = _instance!._manager!.Get<T>(keyStr);
-        if (configValue != null)
+        if (_instance!._manager.ContainsKey(keyStr))
         {
-            Log.Debug($"从配置文件获取配置 {keyStr}: {configValue}");
-            return configValue;
+            try
+            {
+                var configValue = _instance._manager.Get<T>(keyStr);
+                Log.Debug($"从配置文件获取配置 {keyStr}: {configValue}");
+                return configValue;
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"从配置文件获取配置 {keyStr} 失败: {ex.Message}");
+            }
         }
 
         // 2. 如果配置文件中不存在，尝试从环境变量获取
@@ -94,14 +118,116 @@ public partial class ConfigStore : AutoGodotService
             return envValue;
         }
 
-        // 3. 返回默认值
-        Log.Debug($"配置 {keyStr} 未找到，使用默认值: {defaultValue}");
+        // 3. 返回注册的默认值
+        if (_instance._defaultValues.TryGetValue(keyStr, out var defaultValue))
+        {
+            if (defaultValue is T typedDefault)
+            {
+                Log.Debug($"使用注册的默认值 {keyStr}: {typedDefault}");
+                return typedDefault;
+            }
+            else
+            {
+                Log.Warn($"配置 {keyStr} 的默认值类型不匹配，期望 {typeof(T).Name}，实际 {defaultValue.GetType().Name}");
+            }
+        }
+
+        // 4. 如果连默认值都没有，抛出异常
+        throw new KeyNotFoundException($"配置项 {keyStr} 未找到且未注册默认值");
+    }
+
+    /// <summary>
+    /// 尝试获取配置值
+    /// </summary>
+    /// <typeparam name="T">配置值类型</typeparam>
+    /// <param name="key">配置键</param>
+    /// <param name="value">输出参数，配置值</param>
+    /// <returns>是否成功获取（包括默认值）</returns>
+    public static bool TryGet<T>(object key, out T value)
+    {
+        try
+        {
+            value = Get<T>(key);
+            return true;
+        }
+        catch (KeyNotFoundException)
+        {
+            value = default!;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 获取配置值，如果不存在则使用指定的默认值
+    /// </summary>
+    /// <typeparam name="T">配置值类型</typeparam>
+    /// <param name="key">配置键</param>
+    /// <param name="defaultValue">默认值</param>
+    /// <returns>配置值或指定的默认值</returns>
+    public static T GetOrDefault<T>(object key, T defaultValue)
+    {
+        var keyStr = key.ToString()!;
+
+        // 1. 优先从配置文件获取
+        if (_instance!._manager!.ContainsKey(keyStr))
+        {
+            try
+            {
+                var configValue = _instance._manager.Get<T>(keyStr);
+                Log.Debug($"从配置文件获取配置 {keyStr}: {configValue}");
+                return configValue;
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"从配置文件获取配置 {keyStr} 失败: {ex.Message}");
+            }
+        }
+
+        // 2. 如果配置文件中不存在，尝试从环境变量获取
+        try
+        {
+            var envValue = GetFromEnvironmentVariable<T>(keyStr);
+            if (envValue != null)
+            {
+                Log.Debug($"从环境变量获取配置 {keyStr}: {envValue}");
+                return envValue;
+            }
+        }
+        catch (Exception e)
+        {
+            Log.Debug($"{keyStr} <UNK>: {e.Message}");
+        }
+
+
+        // 3. 返回指定的默认值
+        Log.Debug($"使用指定的默认值 {keyStr}: {defaultValue}");
         return defaultValue;
     }
 
     /// <summary>
+    /// 检查配置是否存在（包括默认值）
+    /// </summary>
+    /// <param name="key">配置键</param>
+    /// <returns>是否存在</returns>
+    public static bool HasValue(object key)
+    {
+        var keyStr = key.ToString()!;
+
+        // 检查配置文件
+        if (_instance!._manager!.ContainsKey(keyStr))
+            return true;
+
+        // 检查环境变量
+        var envKey = ConvertKeyToEnvironmentVariable(keyStr);
+        if (EnvironmentVariableManager.HasEnvironmentVariable(envKey))
+            return true;
+
+        // 检查是否有注册的默认值
+        return _instance._defaultValues.ContainsKey(keyStr);
+    }
+
+    /// <summary>
     /// 从环境变量获取配置值
-    /// 优先级：进程 > 用户 > 系统
     /// </summary>
     /// <typeparam name="T">配置值类型</typeparam>
     /// <param name="key">配置键</param>
@@ -109,7 +235,7 @@ public partial class ConfigStore : AutoGodotService
     private static T? GetFromEnvironmentVariable<T>(string key)
     {
         // 将配置键转换为环境变量名（大写，点号替换为下划线）
-        var envKey = ConvertKeyToEnvironmentVariable(key);
+        var envKey = $"SIGMUS_{ConvertKeyToEnvironmentVariable(key)}";
 
         return EnvironmentVariableManager.GetEnvironmentVariable<T>(envKey);
     }
@@ -126,48 +252,6 @@ public partial class ConfigStore : AutoGodotService
     }
 
     /// <summary>
-    /// 尝试获取配置值
-    /// </summary>
-    /// <typeparam name="T">配置值类型</typeparam>
-    /// <param name="key">配置键</param>
-    /// <param name="value">输出参数，配置值</param>
-    /// <returns>是否成功获取</returns>
-    public static bool TryGet<T>(object key, out T? value)
-    {
-        var result = Get<T>(key);
-        if (result == null)
-        {
-            value = default;
-            return false;
-        }
-
-        value = result;
-        return true;
-    }
-
-    /// <summary>
-    /// 初始化配置，如果已存在则不更新
-    /// </summary>
-    /// <param name="key">配置键</param>
-    /// <param name="value">配置值</param>
-    /// <typeparam name="T">配置值类型</typeparam>
-    public static void Init<T>(object key, T value)
-    {
-        var keyStr = key.ToString()!;
-
-        // 检查配置是否已存在
-        if (_instance!._manager!.Get<T>(keyStr) == null)
-        {
-            _instance._manager.Set(keyStr, value);
-            Log.Debug($"初始化配置 {keyStr}: {value}");
-        }
-        else
-        {
-            Log.Debug($"配置 {keyStr} 已存在，跳过初始化");
-        }
-    }
-
-    /// <summary>
     /// 设置配置值
     /// </summary>
     /// <param name="key">配置键</param>
@@ -179,11 +263,23 @@ public partial class ConfigStore : AutoGodotService
         {
             var keyStr = key.ToString()!;
             _instance!._manager!.Set(keyStr, value);
+
+            // 更新类型信息
+            _instance._configTypes[keyStr] = typeof(T);
+
             Log.Debug($"设置配置 {keyStr}: {value}");
         }
         finally
         {
             _instance?.OnConfigUpdated.Invoke(key.ToString()!, value);
+        }
+    }
+
+    public static void Init<T>(object key, T value)
+    {
+        if (!HasValue(key))
+        {
+            Set(key, value);
         }
     }
 
@@ -212,12 +308,78 @@ public partial class ConfigStore : AutoGodotService
     }
 
     /// <summary>
-    /// 获取所有配置项
+    /// 获取所有配置项（包括默认值）
     /// </summary>
     /// <returns>配置项字典</returns>
     public static Dictionary<string, object> GetAll()
     {
-        return _instance!._manager!.GetAll();
+        var result = new Dictionary<string, object>();
+
+        // 添加配置文件中的值
+        var configValues = _instance!._manager!.GetAll();
+        foreach (var kvp in configValues)
+        {
+            result[kvp.Key] = kvp.Value;
+        }
+
+        // 添加默认值（如果配置文件中不存在）
+        foreach (var kvp in _instance._defaultValues)
+        {
+            if (!result.ContainsKey(kvp.Key))
+            {
+                result[kvp.Key] = kvp.Value;
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// 获取配置项信息
+    /// </summary>
+    /// <param name="key">配置键</param>
+    /// <returns>配置项信息</returns>
+    public static ConfigItemInfo GetConfigInfo(object key)
+    {
+        var keyStr = key.ToString()!;
+
+        return new ConfigItemInfo
+        {
+            Key = keyStr,
+            Type = _instance!._configTypes.GetValueOrDefault(keyStr),
+            HasDefaultValue = _instance._defaultValues.ContainsKey(keyStr),
+            DefaultValue = _instance._defaultValues.GetValueOrDefault(keyStr),
+            Source = GetConfigSource(keyStr),
+            HasValue = HasValue(key)
+        };
+    }
+
+    /// <summary>
+    /// 获取配置来源信息
+    /// </summary>
+    /// <param name="key">配置键</param>
+    /// <returns>配置来源描述</returns>
+    private static string GetConfigSource(string key)
+    {
+        // 检查配置文件
+        if (_instance!._manager!.ContainsKey(key))
+            return "配置文件";
+
+        // 检查环境变量
+        var envKey = ConvertKeyToEnvironmentVariable(key);
+        if (EnvironmentVariableManager.HasEnvironmentVariable(envKey, EnvironmentVariableTarget.Process))
+            return "进程环境变量";
+
+        if (EnvironmentVariableManager.HasEnvironmentVariable(envKey, EnvironmentVariableTarget.User))
+            return "用户环境变量";
+
+        if (EnvironmentVariableManager.HasEnvironmentVariable(envKey, EnvironmentVariableTarget.Machine))
+            return "系统环境变量";
+
+        if (_instance._defaultValues.ContainsKey(key))
+            return "默认值";
+
+        return "未找到";
     }
 
     /// <summary>
@@ -239,47 +401,59 @@ public partial class ConfigStore : AutoGodotService
     }
 
     /// <summary>
-    /// 检查配置是否存在
+    /// 获取所有注册的配置项信息
     /// </summary>
-    /// <param name="key">配置键</param>
-    /// <returns>是否存在</returns>
-    public static bool ContainsKey(object key)
+    /// <returns>配置项信息列表</returns>
+    public static List<ConfigItemInfo> GetAllConfigInfo()
     {
-        var keyStr = key.ToString()!;
+        var result = new List<ConfigItemInfo>();
+        var allKeys = new HashSet<string>();
 
-        // 检查配置文件
-        if (_instance!._manager!.ContainsKey(keyStr))
-            return true;
+        // 收集所有键
+        allKeys.UnionWith(_instance!._manager!.GetAll().Keys);
+        allKeys.UnionWith(_instance._defaultValues.Keys);
 
-        // 检查环境变量
-        var envKey = ConvertKeyToEnvironmentVariable(keyStr);
-        return EnvironmentVariableManager.HasEnvironmentVariable(envKey);
+        foreach (var key in allKeys)
+        {
+            result.Add(GetConfigInfo(key));
+        }
+
+        return result;
     }
+}
+
+/// <summary>
+/// 配置项信息
+/// </summary>
+public class ConfigItemInfo
+{
+    /// <summary>
+    /// 配置键
+    /// </summary>
+    public string Key { get; set; } = string.Empty;
 
     /// <summary>
-    /// 获取配置来源信息
+    /// 配置值类型
     /// </summary>
-    /// <param name="key">配置键</param>
-    /// <returns>配置来源描述</returns>
-    public static string GetConfigSource(object key)
-    {
-        var keyStr = key.ToString()!;
+    public Type? Type { get; set; }
 
-        // 检查配置文件
-        if (_instance!._manager!.ContainsKey(keyStr))
-            return "配置文件";
+    /// <summary>
+    /// 是否有默认值
+    /// </summary>
+    public bool HasDefaultValue { get; set; }
 
-        // 检查环境变量
-        var envKey = ConvertKeyToEnvironmentVariable(keyStr);
-        if (EnvironmentVariableManager.HasEnvironmentVariable(envKey, EnvironmentVariableTarget.Process))
-            return "进程环境变量";
+    /// <summary>
+    /// 默认值
+    /// </summary>
+    public object? DefaultValue { get; set; }
 
-        if (EnvironmentVariableManager.HasEnvironmentVariable(envKey, EnvironmentVariableTarget.User))
-            return "用户环境变量";
+    /// <summary>
+    /// 配置来源
+    /// </summary>
+    public string Source { get; set; } = string.Empty;
 
-        if (EnvironmentVariableManager.HasEnvironmentVariable(envKey, EnvironmentVariableTarget.Machine))
-            return "系统环境变量";
-
-        return "未找到";
-    }
+    /// <summary>
+    /// 是否有值（包括默认值）
+    /// </summary>
+    public bool HasValue { get; set; }
 }

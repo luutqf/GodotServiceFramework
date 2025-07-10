@@ -7,41 +7,39 @@ using SQLite;
 
 namespace GodotServiceFramework.GTask.Service;
 
-public partial class GameTaskService : AutoGodotService
+[InjectService]
+public partial class GameTaskService
 {
-    private readonly SQLiteConnection _db;
-
     public GameTaskService()
     {
-        var globalizePath = ProjectSettings.GlobalizePath("user://data/db.sqlite");
-        _db = SqliteTool.Db(globalizePath, out _, initTables: [typeof(GameTaskEntity)]);
+        SqliteManager.Instance.AddTableType(typeof(GameTaskEntity));
     }
 
 
     public bool CreateGameTaskEntity(GameTaskEntity gameTaskEntity)
     {
-        return _db.InsertItem(gameTaskEntity);
+        return SqliteManager.Instance.Insert(gameTaskEntity);
     }
 
 
     public bool DeleteGameTaskEntity(GameTaskEntity gameTaskEntity)
     {
-        return _db.DeleteItem(gameTaskEntity);
+        return SqliteManager.Instance.Delete(gameTaskEntity);
     }
 
     public bool UpdateGameTaskEntity(GameTaskEntity gameTaskEntity)
     {
-        return _db.UpdateItem(gameTaskEntity);
+        return SqliteManager.Instance.Update(gameTaskEntity);
     }
 
     public List<string> GetTaskGroups()
     {
-        return _db.Table<GameTaskEntity>().Select(entity => entity.Group).Distinct().ToList();
+        return SqliteManager.Table<GameTaskEntity>().Select(entity => entity.Group).Distinct().ToList();
     }
 
     [BindingCache]
     public List<GameTaskEntity> ListGameTaskEntityByGroup(string group)
     {
-        return _db.Table<GameTaskEntity>().Where(entity => entity.Group == group).ToList();
+        return SqliteManager.Table<GameTaskEntity>().Where(entity => entity.Group == group).ToList();
     }
 }

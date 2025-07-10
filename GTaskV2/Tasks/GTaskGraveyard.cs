@@ -31,12 +31,12 @@ public class GTaskGraveyard(GTaskModel model, GTaskFlow flow) : BaseTimerGTask(m
             // ChainComplete(task)
         }
 
-        Log.Info(Model.NextModels.Length > 0 ? $"{Flow.Name} 任务流已全部完成,还有其他后续任务" : $"{Flow.Name} 任务流已全部完成",
+        this.Info(Model.NextModels.Length > 0 ? $"{Flow.Name} 任务流已全部完成,还有其他后续任务" : $"{Flow.Name} 任务流已全部完成",
             BbColor.Aqua);
 
-        Log.Debug("====================================");
-        Log.Debug($"{Context.Id}");
-        GTaskContext.Contexts.TryAdd(Context.Id, Context);
+        this.Info("====================================");
+        this.Info($"{Context.Id}");
+        // GTaskContext.Contexts.TryAdd(Context.Id, Context);
         Complete();
         foreach (var baseGTask in flow)
         {

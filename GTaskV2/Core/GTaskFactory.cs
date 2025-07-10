@@ -8,7 +8,8 @@ namespace GodotServiceFramework.GTaskV2;
 /// <summary>
 /// 任务工厂, 用于创建新的任务实例, 
 /// </summary>
-public partial class GTaskFactory : AutoGodotService
+[InjectService]
+public partial class GTaskFactory
 {
     /// <summary>
     /// 这里缓存着任务名称和类型

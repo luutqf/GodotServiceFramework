@@ -1,27 +1,39 @@
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using Godot;
 using GodotServiceFramework.Config;
-using GodotServiceFramework.Context;
 using GodotServiceFramework.Context.Component;
 using GodotServiceFramework.Context.Controller;
 using GodotServiceFramework.Context.Service;
 using GodotServiceFramework.Extensions;
-using GodotServiceFramework.Nodes;
 using GodotServiceFramework.Util;
 
 namespace GodotServiceFramework.Startup;
 
 public static class AutoStartup
 {
+    private const string Banner =
+        """
+         _____ _                           
+        /  ___(_)                          
+        \ `--. _  __ _ _ __ ___  _   _ ___ 
+         `--. \ |/ _` | '_ ` _ \| | | / __|
+        /\__/ / | (_| | | | | | | |_| \__ \
+        \____/|_|\__, |_| |_| |_|\__,_|___/
+                  __/ |                    
+                 |___/                     
+        ================================================================================================================
+        """;
+
     public static void Initialize()
     {
         try
         {
             if (Engine.IsEditorHint()) return;
 
+            //日志和配置中心是第一个加载的
+            RegisterService(typeof(MyLogger));
+            Log.Info(Banner, BbColor.Aqua);
             RegisterService(typeof(ConfigStore));
-            RegisterService(typeof(SceneStatsManager));
 
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
@@ -31,7 +43,7 @@ public static class AutoStartup
             {
                 var godotGameAttribute = assembly.GetCustomAttribute<GodotGameAttribute>();
                 if (godotGameAttribute == null) continue;
-                GD.Print($"Loading GodotGame Assembly : {assembly.FullName} - {godotGameAttribute.Label}");
+                Log.Info($"Loading GodotGame Assembly : {assembly.FullName} - {godotGameAttribute.Label}");
 
                 var list = SyncLoadService(assembly);
                 componentList.AddRange(list);
@@ -123,18 +135,10 @@ public static class AutoStartup
     /// <returns></returns>
     private static void RegisterService(Type type)
     {
-        if (!type.GetInterfaces().Contains(typeof(IService)) || type.IsAbstract || type.IsInterface ||
+        if (type.IsAbstract || type.IsInterface ||
             Services.Has(type)) return;
 
-        GD.Print($"Component Type: {type.Name}");
-
-        var service = (IService)Activator.CreateInstance(type)!;
-
-        if (service is Node node)
-        {
-            node.Name = type.Name;
-            Services.Add(node);
-        }
+        Services.Add(Activator.CreateInstance(type)!);
     }
 
 
@@ -160,8 +164,8 @@ public static class AutoStartup
             types.AddRange(componentScanAttribute.Values);
         }
 
-        types.AddRange(assembly.GetTypes().Where(type => type.IsSubclassOf(typeof(AutoGodotService))).ToList());
-        // types.AddRange(assembly.GetTypes().Where(type => type.IsSubclassOf(typeof(AutoGodotTimer))).ToList());
+        types.AddRange(assembly.GetTypes().Where(type =>
+            type.GetCustomAttributes().Any(attribute => attribute.GetType() == typeof(InjectServiceAttribute))));
         return types;
     }
 }

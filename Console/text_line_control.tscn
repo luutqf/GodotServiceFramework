@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=3 uid="uid://dy1hr7psafir8"]
 
 [ext_resource type="Script" path="res://GodotServiceFramework/Console/TextLineControl.cs" id="1_sonlw"]
-[ext_resource type="Texture2D" uid="uid://cguuhblbc6uuf" path="res://Image/头像02.jpeg" id="2_dwqmv"]
+[ext_resource type="Texture2D" uid="uid://bkjsw6w51dlii" path="res://GodotServiceFramework/Image/头像02.jpeg" id="2_dwqmv"]
 [ext_resource type="Script" uid="uid://dn653xkyl7cba" path="res://GodotServiceFramework/Console/Node/MyRichTextLabel.cs" id="3_wnt22"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_0rtgj"]

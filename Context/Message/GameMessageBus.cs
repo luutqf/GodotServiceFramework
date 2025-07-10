@@ -13,7 +13,8 @@ namespace GodotServiceFramework.Context;
 ///
 /// 固定方式:  销毁, 播放动画, 播放声音
 /// </summary>
-public partial class GameMessageBus : AutoGodotService
+[InjectService]
+public partial class GameMessageBus : IDisposable
 {
     private static readonly Dictionary<string, HashSet<WeakReference<IMessageConsumer>>> WeakChannelMap = [];
 
@@ -113,7 +114,7 @@ public partial class GameMessageBus : AutoGodotService
     }
 
 
-    public override void _ExitTree()
+    public void Dispose()
     {
         if (Engine.GetMainLoop() is SceneTree sceneTree)
             sceneTree.NodeAdded -= Register;

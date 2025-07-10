@@ -14,7 +14,7 @@ public partial class GTaskFlowEntity : RefCounted, IBinding
     [Column("id")]
     public int Id { get; set; }
 
-    public string Description { get; set; }
+    public string Description { get; set; } = string.Empty;
 
     [Unique(Name = "name")] public string Name { get; set; } = string.Empty;
 

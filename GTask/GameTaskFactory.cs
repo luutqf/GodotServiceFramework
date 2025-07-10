@@ -12,14 +12,14 @@ namespace GodotServiceFramework.GTask;
 /// </summary>
 // [AutoGlobalService]
 // ReSharper disable once ClassNeverInstantiated.Global
-public partial class GameTaskFactory : AutoGodotService, ICloseable
+public partial class GameTaskFactory : IDisposable
 {
     /// <summary>
     /// 这里缓存着任务名称和类型
     /// </summary>
     private readonly Dictionary<string, Type> _taskTypes = [];
 
-    public SQLiteConnection? Db;
+    // public SQLiteConnection? Db;
 
     private readonly Dictionary<ulong, GameTask> _tasks = [];
 
@@ -28,16 +28,17 @@ public partial class GameTaskFactory : AutoGodotService, ICloseable
     public event Action<GameTask> OnTaskAdded = delegate { };
 
 
-    public override void _Ready()
+    public GameTaskFactory()
     {
         Log.Info("任务工厂已加载");
         var globalizePath = ProjectSettings.GlobalizePath("user://data/db.sqlite");
-        Db = SqliteTool.Db(globalizePath, out _,
-            initTables: [typeof(GameTaskEntity), typeof(GameTaskFlowEntity), typeof(GameTaskLoopEntity)]);
-    }
+        // Db = SqliteTool.Db(globalizePath, out _,
+        // initTables: [typeof(GameTaskEntity), typeof(GameTaskFlowEntity), typeof(GameTaskLoopEntity)]);
 
-    public GameTaskFactory()
-    {
+        SqliteManager.Instance.AddTableTypes([
+            typeof(GameTaskEntity), typeof(GameTaskFlowEntity), typeof(GameTaskLoopEntity)
+        ]);
+
         // 这里会收集所有实现GameTask的类, 需要取出时,就实例化一个.
         var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
@@ -96,22 +97,22 @@ public partial class GameTaskFactory : AutoGodotService, ICloseable
 
     public GameTaskLoop LoadGameTaskLoop(string name)
     {
-        return Db!.Table<GameTaskLoopEntity>().FirstOrDefault(entity => entity.Name == name).ToTaskLoop();
+        return SqliteManager.Table<GameTaskLoopEntity>().FirstOrDefault(entity => entity.Name == name).ToTaskLoop();
     }
 
     public void Close()
     {
         _taskTypes.Clear();
-        Db?.Dispose();
+        // Db?.Dispose();
     }
 
     public void Remove(ulong id)
     {
         _tasks.Remove(id);
     }
-    
 
-    public override void _ExitTree()
+
+    public void Dispose()
     {
         Close();
     }

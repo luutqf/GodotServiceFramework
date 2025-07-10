@@ -9,7 +9,7 @@ namespace GodotServiceFramework.Db;
 public class YamlConfigManager
 {
     private readonly string _configPath;
-    private Dictionary<string, object> _configData = [];
+    private Dictionary<string, object> _configData;
     private readonly ISerializer _serializer;
     private readonly IDeserializer _deserializer;
     private bool _isInitialized = false;
@@ -32,7 +32,7 @@ public class YamlConfigManager
             .WithNamingConvention(CamelCaseNamingConvention.Instance)
             .Build();
 
-        _configData = new Dictionary<string, object>();
+        _configData = [];
     }
 
     /// <summary>
@@ -80,7 +80,7 @@ public class YamlConfigManager
     {
         if (!File.Exists(_configPath))
         {
-            _configData = new Dictionary<string, object>();
+            _configData = [];
             SaveConfig(); // 创建一个空的配置文件
             return;
         }
@@ -88,12 +88,11 @@ public class YamlConfigManager
         string yamlContent = File.ReadAllText(_configPath);
         if (string.IsNullOrWhiteSpace(yamlContent))
         {
-            _configData = new Dictionary<string, object>();
+            _configData = [];
             return;
         }
 
-        _configData = _deserializer.Deserialize<Dictionary<string, object>>(yamlContent)
-                      ?? new Dictionary<string, object>();
+        _configData = _deserializer.Deserialize<Dictionary<string, object>>(yamlContent);
     }
 
     /// <summary>
@@ -103,7 +102,7 @@ public class YamlConfigManager
     {
         if (!File.Exists(_configPath))
         {
-            _configData = new Dictionary<string, object>();
+            _configData = [];
             await SaveConfigAsync(); // 创建一个空的配置文件
             return;
         }
@@ -111,12 +110,11 @@ public class YamlConfigManager
         string yamlContent = await File.ReadAllTextAsync(_configPath);
         if (string.IsNullOrWhiteSpace(yamlContent))
         {
-            _configData = new Dictionary<string, object>();
+            _configData = [];
             return;
         }
 
-        _configData = _deserializer.Deserialize<Dictionary<string, object>>(yamlContent)
-                      ?? new Dictionary<string, object>();
+        _configData = _deserializer.Deserialize<Dictionary<string, object>>(yamlContent);
     }
 
     /// <summary>
@@ -153,9 +151,8 @@ public class YamlConfigManager
     /// </summary>
     /// <typeparam name="T">值的类型</typeparam>
     /// <param name="key">配置键</param>
-    /// <param name="defaultValue">如果键不存在时返回的默认值</param>
     /// <returns>配置值，如果键不存在则返回默认值</returns>
-    public T? Get<T>(string key, T? defaultValue = default)
+    public T Get<T>(string key)
     {
         EnsureInitialized();
 
@@ -186,11 +183,11 @@ public class YamlConfigManager
             }
             catch
             {
-                return defaultValue;
+                throw new KeyNotFoundException(key);
             }
         }
 
-        return defaultValue;
+        throw new KeyNotFoundException(key);
     }
 
     /// <summary>

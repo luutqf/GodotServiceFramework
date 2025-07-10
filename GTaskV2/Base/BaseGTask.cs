@@ -164,15 +164,15 @@ public abstract class BaseGTask(GTaskModel model, GTaskFlow flow) : IGTask
 
     protected virtual bool PreCheck()
     {
-        switch (Context.TaskStatus)
+        switch (Context.GTaskStatus)
         {
-            case TaskStatus.Error:
+            case GTaskStatus.Error:
                 this.Warn("任务处于错误状态,禁止启动");
                 return false;
-            case TaskStatus.Pause or TaskStatus.Stop:
+            case GTaskStatus.Pause or GTaskStatus.Stop:
                 this.Warn("任务处于暂停或停止状态");
                 return false;
-            case TaskStatus.Complete:
+            case GTaskStatus.Complete:
                 this.Warn("任务已完成了");
                 return false;
         }
@@ -190,16 +190,17 @@ public abstract class BaseGTask(GTaskModel model, GTaskFlow flow) : IGTask
     /// <returns></returns>
     public async Task<bool> Start()
     {
-        TaskCounter.Increment();
+        // TaskCounter.Increment();
         if (!PreCheck())
         {
             return false;
         }
 
-        BeforeStart();
-
         try
         {
+            BeforeStart();
+
+
             switch (Progress)
             {
                 case TaskDefault:
@@ -260,12 +261,12 @@ public abstract class BaseGTask(GTaskModel model, GTaskFlow flow) : IGTask
 
     public virtual void Pause()
     {
-        Context.TaskStatus = TaskStatus.Pause;
+        Context.GTaskStatus = GTaskStatus.Pause;
     }
 
     public virtual void Resume()
     {
-        Context.TaskStatus = TaskStatus.Running;
+        Context.GTaskStatus = GTaskStatus.Running;
         _ = Start();
     }
 
@@ -303,8 +304,6 @@ public abstract class BaseGTask(GTaskModel model, GTaskFlow flow) : IGTask
         Parameters.Clear();
         Parameters = [];
 
-        // Flow = null;
-        TaskCounter.Decrement();
         OnComplete = null;
         Context.SendMessage(this, string.Empty, ActionType.Destroy);
     }

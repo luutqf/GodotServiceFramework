@@ -16,12 +16,12 @@ public static class EnvironmentVariableManager
         /// 进程环境变量（最高优先级）
         /// </summary>
         Process,
-        
+
         /// <summary>
         /// 用户环境变量（中等优先级）
         /// </summary>
         User,
-        
+
         /// <summary>
         /// 系统环境变量（最低优先级）
         /// </summary>
@@ -68,13 +68,13 @@ public static class EnvironmentVariableManager
             {
                 case System.EnvironmentVariableTarget.Process:
                     return Environment.GetEnvironmentVariable(variable);
-                
+
                 case System.EnvironmentVariableTarget.User:
                     return Environment.GetEnvironmentVariable(variable, System.EnvironmentVariableTarget.User);
-                
+
                 case System.EnvironmentVariableTarget.Machine:
                     return Environment.GetEnvironmentVariable(variable, System.EnvironmentVariableTarget.Machine);
-                
+
                 default:
                     return null;
             }
@@ -93,7 +93,8 @@ public static class EnvironmentVariableManager
     /// <param name="variable">环境变量名</param>
     /// <param name="value">环境变量值</param>
     /// <param name="target">目标类型，默认为进程</param>
-    public static void SetEnvironmentVariable(string variable, string value, System.EnvironmentVariableTarget target = System.EnvironmentVariableTarget.Process)
+    public static void SetEnvironmentVariable(string variable, string value,
+        System.EnvironmentVariableTarget target = System.EnvironmentVariableTarget.Process)
     {
         try
         {
@@ -123,7 +124,8 @@ public static class EnvironmentVariableManager
     /// </summary>
     /// <param name="target">目标类型，默认为进程</param>
     /// <returns>环境变量字典</returns>
-    public static Dictionary<string, string> GetAllEnvironmentVariables(System.EnvironmentVariableTarget target = System.EnvironmentVariableTarget.Process)
+    public static Dictionary<string, string> GetAllEnvironmentVariables(
+        System.EnvironmentVariableTarget target = System.EnvironmentVariableTarget.Process)
     {
         try
         {
@@ -146,11 +148,12 @@ public static class EnvironmentVariableManager
     /// <param name="defaultValue">默认值</param>
     /// <param name="target">指定目标（可选）</param>
     /// <returns>转换后的值</returns>
-    public static T? GetEnvironmentVariable<T>(string variable, T? defaultValue = default, System.EnvironmentVariableTarget? target = null)
+    public static T? GetEnvironmentVariable<T>(string variable, T? defaultValue = default,
+        System.EnvironmentVariableTarget? target = null)
     {
         var value = GetEnvironmentVariable(variable, target);
         if (string.IsNullOrEmpty(value))
-            return defaultValue;
+            throw new KeyNotFoundException(variable);
 
         try
         {
@@ -181,4 +184,4 @@ public static class EnvironmentVariableManager
             return defaultValue;
         }
     }
-} 
+}

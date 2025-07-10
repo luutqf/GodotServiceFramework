@@ -1,5 +1,5 @@
-namespace GodotServiceFramework.Context.Service;
-
-public interface IService
-{
-}
+// namespace GodotServiceFramework.Context.Service;
+//
+// public interface IService
+// {
+// }

@@ -11,25 +11,16 @@ using SQLite;
 
 namespace GodotServiceFramework.GTask.Service;
 
-public partial class TaskWorkflowService : AutoGodotService
+[InjectService]
+public partial class TaskWorkflowService
 {
-    private readonly SQLiteConnection _db;
-
-
     public TaskWorkflowService()
     {
-        var globalizePath = ProjectSettings.GlobalizePath("user://data/db.sqlite");
-        _db = SqliteTool.Db(globalizePath, out _,
-            initTables:
-            [
-                typeof(GameTaskFlowEntity), typeof(StepTaskEntity),
-                typeof(TaskWorkflowChainEntity)
-            ]);
+        SqliteManager.Instance.AddTableTypes([
+            typeof(GameTaskFlowEntity), typeof(StepTaskEntity),
+            typeof(TaskWorkflowChainEntity)
+        ]);
     }
-
-
-
-
 
 
     /// <summary>
@@ -39,30 +30,30 @@ public partial class TaskWorkflowService : AutoGodotService
     /// <returns></returns>
     public bool CreateTaskWorkflowEntity(GameTaskFlowEntity taskWorkflow)
     {
-        return _db!.InsertItem(taskWorkflow);
+        return SqliteManager.Instance.Insert(taskWorkflow);
     }
 
 
     public bool DeleteTaskWorkflow(GameTaskFlowEntity taskWorkflow)
     {
-        return _db!.DeleteItem(taskWorkflow);
+        return SqliteManager.Instance.Delete(taskWorkflow);
     }
 
     public bool UpdateTaskWorkflow(GameTaskFlowEntity taskWorkflow)
     {
-        return _db!.UpdateItem(taskWorkflow);
+        return SqliteManager.Instance.Update(taskWorkflow);
     }
 
     [BindingCache]
     public List<GameTaskFlowEntity> ListTaskWorkflows()
     {
-        return _db!.Table<GameTaskFlowEntity>().ToList();
+        return SqliteManager.Table<GameTaskFlowEntity>().ToList();
     }
 
     [BindingCache]
     public GameTaskFlowEntity GetTaskWorkflowEntityByName(string name)
     {
-        var flowEntity = _db!.Table<GameTaskFlowEntity>().FirstOrDefault(entity => entity.Name == name);
+        var flowEntity = SqliteManager.Table<GameTaskFlowEntity>().FirstOrDefault(entity => entity.Name == name);
         if (flowEntity == null) throw new Exception($"<UNK>{name}<UNK>");
         InitTaskFlowEntities(flowEntity);
 
@@ -84,7 +75,7 @@ public partial class TaskWorkflowService : AutoGodotService
             {
                 List<GameTaskEntity> tasks = [];
                 //TODO 这里考虑要不要分散到具体节点上操作
-                tasks.AddRange(list.Select(i => _db!.Table<GameTaskEntity>().FirstOrDefault(e => e.Id == i)));
+                tasks.AddRange(list.Select(i => SqliteManager.Table<GameTaskEntity>().FirstOrDefault(e => e.Id == i)));
                 taskLists.Add(tasks);
             }
 
@@ -149,7 +140,7 @@ public partial class TaskWorkflowService : AutoGodotService
 
     public StepTaskEntity GetStepTaskEntityByName(string name)
     {
-        return _db.Table<StepTaskEntity>().FirstOrDefault(entity => entity.Name == name);
+        return SqliteManager.Table<StepTaskEntity>().FirstOrDefault(entity => entity.Name == name);
     }
 
     /// <summary>

@@ -42,11 +42,11 @@ public static class FileUtils
         try
         {
             Directory.CreateDirectory(path);
-            Console.WriteLine($"目录创建成功: {path}");
+            Log.Info($"目录创建成功: {path}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"创建目录失败: {ex.Message}");
+            Log.Info($"创建目录失败: {ex.Message}");
         }
     }
 
@@ -70,39 +70,39 @@ public static class FileUtils
             // 如果目录已存在，直接返回true
             if (Directory.Exists(path))
             {
-                Console.WriteLine($"目录已存在: {path}");
+                Log.Info($"目录已存在: {path}");
                 return true;
             }
 
             // 创建目录（包括所有必需的父目录）
             DirectoryInfo di = Directory.CreateDirectory(path);
-            Console.WriteLine($"目录创建成功: {di.FullName}");
+            Log.Info($"目录创建成功: {di.FullName}");
 
             return true;
         }
         catch (PathTooLongException)
         {
-            Console.WriteLine("路径长度超出系统限制");
+            Log.Info("路径长度超出系统限制");
             return false;
         }
         catch (DirectoryNotFoundException)
         {
-            Console.WriteLine("指定的路径无效（例如，它位于未映射的驱动器上）");
+            Log.Info("指定的路径无效（例如，它位于未映射的驱动器上）");
             return false;
         }
         catch (IOException ex)
         {
-            Console.WriteLine($"IO错误: {ex.Message}");
+            Log.Info($"IO错误: {ex.Message}");
             return false;
         }
         catch (UnauthorizedAccessException)
         {
-            Console.WriteLine("没有创建目录的权限");
+            Log.Info("没有创建目录的权限");
             return false;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"创建目录时发生错误: {ex.Message}");
+            Log.Info($"创建目录时发生错误: {ex.Message}");
             return false;
         }
     }

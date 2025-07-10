@@ -14,16 +14,18 @@ namespace GodotServiceFramework.GTaskV2;
 public partial class GTaskContext : RefCounted
 {
     //缓存已经创建的上下文
-    public static readonly ConcurrentDictionary<long, GTaskContext> Contexts = new();
+    public static GTaskContext? CurrentContext;
 
     //自动生成的Id
     public long Id { get; } = SnowflakeIdGenerator.NextId();
+
+    public string Name { get; set; } = string.Empty;
 
     //标明当前上下文属于哪类任务, 普通任务流或任务流循环
     public TaskType TaskType { get; set; }
 
     //任务状态,如已启动,已停止
-    public TaskStatus TaskStatus { get; set; } = TaskStatus.Default;
+    public GTaskStatus GTaskStatus { get; set; } = GTaskStatus.Default;
 
     //任务流的进度历史, key为任务流Id
     // public readonly ConcurrentDictionary<string, Dictionary<string, int>> FlowHistory = [];
@@ -31,17 +33,12 @@ public partial class GTaskContext : RefCounted
     //任务流的消息列表,key为任务流Id
     public readonly ConcurrentDictionary<string, List<string>> FlowMessage = [];
 
-    //事件以及事件时间, key为事件名称
-    // public readonly ConcurrentDictionary<string, DateTime> EventAndTime = [];
-
     //公共参数,每个任务都会从中获取
     public readonly ConcurrentDictionary<string, object> CommonParameters = [];
 
 
     public event Action<BaseGTask, ActionType, string> TaskAction = delegate { };
 
-
-    // public readonly Dictionary<long, Action> TaskActions = [];
 
     /// <summary>
     /// SessionId主要用于将运行状态,定位到一个合适的会话
@@ -86,10 +83,9 @@ public partial class GTaskContext : RefCounted
         {
             case ActionType.Error:
             {
-                TaskStatus = TaskStatus.Error;
+                GTaskStatus = GTaskStatus.Error;
                 break;
             }
-
         }
 
         TaskAction.Invoke(task, actionType, message);
@@ -127,7 +123,7 @@ public partial class GTaskContext : RefCounted
     }
 }
 
-public enum TaskStatus
+public enum GTaskStatus
 {
     Default,
     Running,
@@ -150,14 +146,8 @@ public enum ActionType
 {
     Progress,
     Info,
+    Success,
     Warn,
     Error,
     Destroy,
-
-    // GrayMessage,
-    // GreenMessage,
-    // YellowMessage,
-    // OrangeMessage,
-    // AquaMessage,
-    // RedMessage,
 }

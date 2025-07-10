@@ -2,9 +2,8 @@ using GodotServiceFramework.Context.Service;
 
 namespace GodotServiceFramework.GTask.Rule;
 
-public partial class DynamicRuleEngineManager : AutoGodotService
+// [InjectService]
+public partial class DynamicRuleEngineManager
 {
     public readonly DynamicLinqRuleEngine<GameTaskContext> Instance = new();
-
-
 }

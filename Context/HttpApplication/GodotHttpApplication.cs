@@ -7,7 +7,8 @@ namespace GodotServiceFramework.Context.HttpApplication;
 /// <summary>
 /// 这里的作用是,
 /// </summary>
-public partial class AutoGodotHttpApplication : AutoGodotService
+[InjectService]
+public partial class AutoGodotHttpApplication : IDisposable
 {
     private readonly IRestServer? _restServer;
 
@@ -27,8 +28,9 @@ public partial class AutoGodotHttpApplication : AutoGodotService
             Console.WriteLine($"无法创建HttpServer,请确认软件权限 {e}");
         }
     }
-    
-    public override void _ExitTree()
+
+
+    public void Dispose()
     {
         _restServer?.Stop();
     }
