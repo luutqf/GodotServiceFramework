@@ -107,6 +107,11 @@ public static class DefaultTasks
         return 2;
     };
 
+    public static void Test01()
+    {
+        Console.WriteLine(new Random().Next()%3==0);
+    }
+
 
     [GTaskFunc("InsertTaskSet")] public static Func<GTaskModel, Task<int>> InsertTaskSetFunc = async @this =>
     {

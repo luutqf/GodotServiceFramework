@@ -59,7 +59,7 @@ public sealed class GTaskContext : IDisposable
     {
         foreach (var set in TaskSets)
         {
-            if (set.Progress is 0 or 100 && Evaluate(set.Condition) && SeedInt % 2 == 0)
+            if (set.Progress is 0 or 100 && new Random().Next() % 3 == 0 && Evaluate(set.Condition))
             {
                 //TODO 这里还要加随机,避免总是一个
                 if (SeedQueue.TryDequeue(out var seed))
@@ -248,7 +248,7 @@ public sealed class GTaskContext : IDisposable
         CommonRpc.Instance!.CallDeferred(Node.MethodName.Rpc, "ServerMessage", new Dictionary()
         {
             ["resource"] = "status",
-            ["status"] = "任务取消",
+            ["status"] = "任务终止",
             ["synonyms"] = true,
             ["users"] = string.Join(",", CommonRpc.OnlineUsers.Values)
         });

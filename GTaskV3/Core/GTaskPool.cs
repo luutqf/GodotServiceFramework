@@ -189,16 +189,42 @@ public class GTaskPool
         {
             _availableTasks.Clear();
             _acquiredTasks.Clear();
+            var array = new BaseGTask[_acquiredTasks.Count];
+            _acquiredTasks.CopyTo(array);
+            foreach (var baseGTask in array)
+            {
+                try
+                {
+                    baseGTask.Destroy();
+                }
+                catch (Exception)
+                {
+                    // ignored
+                }
+            }
         }
     }
 
     public void Clear(long id)
     {
+        HashSet<BaseGTask> hashSet = [];
         foreach (var baseGTask in _acquiredTasks.ToArray())
         {
             if (baseGTask.SetId == id)
             {
-                baseGTask.Destroy();
+                hashSet.Add(baseGTask);
+            }
+        }
+
+        foreach (var task in hashSet)
+        {
+            try
+            {
+                task.Destroy();
+            }
+            catch (Exception)
+            {
+                // ignored
             }
         }
     }
